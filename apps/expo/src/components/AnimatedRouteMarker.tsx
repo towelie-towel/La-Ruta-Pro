@@ -16,7 +16,6 @@ const AnimatedRouteMarker = () => {
 
     const _getLiveLocation = useCallback(() => {
         if (anim_route_ref.current.length !== route_count_ref.current) {
-            console.log('locationCount: ', anim_route_ref.current.length.toString() + ' - ' + 'count: ', route_count_ref.current);
 
             const latitude = anim_route_ref.current[route_count_ref.current + 1]?.latitude;
             const longitude = anim_route_ref.current[route_count_ref.current + 1]?.longitude;
@@ -39,17 +38,14 @@ const AnimatedRouteMarker = () => {
         void (async () => {
             const new_direction = await getDirections("23.1218644,-82.32806211", "23.1118644,-82.31806211")
             anim_route_ref.current = new_direction === undefined ? [] : new_direction
-            console.log('anim route setted')
         }
         )()
 
-        console.log('setting interval')
         const interbal_sub = setInterval(() => {
             _getLiveLocation()
         }, 3000)
 
         return () => {
-            console.log('clearing interval')
             clearInterval(interbal_sub)
         }
 

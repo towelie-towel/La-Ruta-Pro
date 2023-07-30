@@ -6,7 +6,6 @@ import { type UserMarkerIconType } from './SelectMarkerIcon';
 import Colors from '../styles/Colors';
 
 const UserMarkerIcon: React.FC<UserMarkerIconType & { colorScheme: 'light' | 'dark' }> = ({ coords, icon, id, name, description, colorScheme }) => {
-    console.log('Rendering UserMarkerIcon ' + id)
     return (
         <Marker
             coordinate={coords}

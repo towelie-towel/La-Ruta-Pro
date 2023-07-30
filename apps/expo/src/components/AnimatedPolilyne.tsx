@@ -14,8 +14,6 @@ export default function AnimatedPolyline({ pathArray }: { pathArray: LatLng[] })
         } else {
             setPolylinePath([])
         }
-
-        console.log(polylinePath)
     };
 
     useEffect(() => {

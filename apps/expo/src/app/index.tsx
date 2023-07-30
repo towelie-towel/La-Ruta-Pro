@@ -50,6 +50,7 @@ const { width } = Dimensions.get("window");
 
 const isAdmin = true;
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type DrawerParamList = {
     "Sign-In": undefined;
     "Sign-Up": undefined;
@@ -222,7 +223,7 @@ export default function Home() {
 
                             )
 
-                        }} label={'Sign-In'} onPress={() => { console.log(signMethod) }} />
+                        }} label={'Sign-In'} onPress={() => { }} />
 
                         <DrawerItem style={{
                             width: '100%',
@@ -399,9 +400,7 @@ export default function Home() {
                                         size={25}
                                         color={Colors[colorScheme ?? 'light'].text}
                                     />
-                                </PressBtn><PressBtn onPress={() => {
-                                    console.log("profileRole", { profileRole, profileState })
-                                }}  >
+                                </PressBtn><PressBtn onPress={() => { }}  >
                                     <AntDesign
                                         name='twitter'
                                         size={25}
@@ -409,7 +408,7 @@ export default function Home() {
                                     />
                                 </PressBtn>
                             </View>
-                        )} label={'Social Networks'} onPress={() => { console.log("Social Networks") }} />
+                        )} label={'Social Networks'} onPress={() => { }} />
 
                     </DrawerContentScrollView>
                 )

@@ -67,14 +67,13 @@ const ProfileDropdown = () => {
                             },
                         ]}
                     >
-                        <Pressable onPress={() => { console.log("Cambiar Imagen") }}>
+                        <Pressable onPress={() => {  }}>
                             <Text className='text-sm '>Cambiar Imagen</Text>
                         </Pressable>
-                        <Pressable onPress={() => { console.log("Cambiar Nombre") }}>
+                        <Pressable onPress={() => {  }}>
                             <Text className='text-sm '>Cambiar Nombre</Text>
                         </Pressable>
                         <Pressable onPress={() => {
-                            console.log('closing session')
                             if (isLoaded) {
                                 void signOut()
                             }

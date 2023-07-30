@@ -9,8 +9,7 @@ import NetInfo from '@react-native-community/netinfo';
 
 import { type MarkerData, initialMarkers } from '../constants/Markers';
 
-const storedMarkers = createJSONStorage<MarkerData[]>(() => AsyncStorage)
-const markersAtom = atomWithStorage<MarkerData[]>('markers', initialMarkers, storedMarkers)
+export const markersAtom = atom<MarkerData[]>(initialMarkers)
 
 const storedHistoryLocation = createJSONStorage<Location.LocationObject[] | undefined>(() => AsyncStorage)
 const historyLocationAtom = atomWithStorage<Location.LocationObject[] | undefined>('historyLocation', undefined, storedHistoryLocation)
@@ -150,7 +149,7 @@ const useMapConnection = () => {
             const { status } = await Location.getForegroundPermissionsAsync()
             await Location.enableNetworkProviderAsync()
 
-            if (status !== 'granted') {
+            if (status.includes('granted')) {
                 console.error('Permission to access location was denied');
                 return;
             }
@@ -162,7 +161,7 @@ const useMapConnection = () => {
                 },
                 (newLocation) => {
                     try {
-                        void setHistoryLocation(async (oldHistoryLocation) => [...((await oldHistoryLocation) || []), newLocation])
+                        void setHistoryLocation(async (oldHistoryLocation) => [...((await oldHistoryLocation) ?? []), newLocation])
 
                         getHeading()
                             .then((heading) => {

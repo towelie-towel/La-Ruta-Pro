@@ -32,7 +32,11 @@ void Image.prefetch("https://lh3.googleusercontent.com/a/AAcHTtfPgVic8qF8hDw_WPE
 
 const MapViewComponent = () => {
 
-    console.log("MapView re-rendered")
+    const renderCount = useRef(0);
+    console.clear();
+    console.log(`MapView re-render # ${renderCount.current}`);
+    renderCount.current += 1;
+
     useKeepAwake();
     const { colorScheme } = useColorScheme();
     const { width, height } = Dimensions.get('window');
@@ -46,7 +50,7 @@ const MapViewComponent = () => {
     const [isAddingMarker, setIsAddingMarker] = useState(false);
 
     const mapViewRef = useRef<MapView>(null);
-    const _userMarkerRef = useRef<MapMarker>(null);
+    const userMarkerRef = useRef<MapMarker>(null);
     const [userMarkers, setUserMarkers] = useAtom(userMarkersAtom)
     // const [profileRole, setProfileRole] = useAtom(profileRoleAtom)
     // const [profileState, setProfileState] = useAtom(profileStateAtom)
@@ -159,9 +163,7 @@ const MapViewComponent = () => {
         }
     }, [isMenuOpen, toggleNavMenu])
 
-    const taxiBtnHandler = useCallback(() => {
-        console.log("taxiBtnHandler")
-    }, [])
+    const taxiBtnHandler = useCallback(() => { }, [])
 
     return (
         <BottomSheetModalProvider>

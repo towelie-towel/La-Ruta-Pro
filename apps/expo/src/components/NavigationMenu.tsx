@@ -22,8 +22,6 @@ type NavigationMenuParams = {
 
 const NavigationMenu: React.FC<NavigationMenuParams> = ({ navigationAnimValue, toggleNavMenu, addMarkerHandler, openUserProfileHandler, taxiBtnHandler }) => {
 
-    console.log("Navigation menu re-rendered")
-
     const { colorScheme } = useColorScheme();
     const { width, height } = Dimensions.get('window');
 

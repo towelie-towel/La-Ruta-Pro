@@ -142,7 +142,6 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
                 password: '3rWx7Hf8'
             })
             await signUp.preparePhoneNumberVerification({ strategy: "phone_code" });
-            console.log("Código de verificación enviado a: +53 " + phoneNumber)
 
             LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
             setIsLoading(false);
@@ -166,7 +165,6 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
             const completeVerifyPhone = await signUp.attemptPhoneNumberVerification({
                 code,
             });
-            console.log("Código de verificación verificado")
 
             await setActive({ session: completeVerifyPhone.createdSessionId })
 

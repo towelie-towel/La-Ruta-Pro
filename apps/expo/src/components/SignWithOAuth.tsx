@@ -67,21 +67,17 @@ const SignWithOAuth = ({ action = 'sign-in', phoneNumber, password, isReduced = 
       } else {
 
         if (action === 'sign-in') {
-          console.log(JSON.stringify(signIn, null, 2))
           signIn && void setActive?.({ session: signIn.createdSessionId });
         }
 
         if (action === 'sign-up') {
-          console.log(JSON.stringify(signUp, null, 2))
           signUp && void setActive?.({ session: signUp.createdSessionId });
         }
 
       }
       afterOauthFlow && afterOauthFlow()
-      console.log("afterOauthFlow")
 
     } catch (err) {
-      console.log(JSON.stringify(err, null, 2));
       console.error("OAuth error", err);
     }
   }, []);
@@ -98,7 +94,6 @@ const SignWithOAuth = ({ action = 'sign-in', phoneNumber, password, isReduced = 
         throw new Error("There are unmet requirements, modifiy this else to handle them")
       }
     } catch (err) {
-      console.log(JSON.stringify(err, null, 2));
       console.error("OAuth error", err);
     }
   }, []);
@@ -155,9 +150,7 @@ const SignWithOAuth = ({ action = 'sign-in', phoneNumber, password, isReduced = 
             bottom: 0
           }}
         >
-          <PressBtn onPress={() => {
-            console.log(JSON.stringify({ phoneNumber, SignUp }, null, 2));
-          }}>
+          <PressBtn onPress={() => { }}>
             <View
               className={'h-12 max-[367px]:h-10 flex-row bg-black dark:border-slate-600 border rounded-3xl justify-center items-center'}
               style={{

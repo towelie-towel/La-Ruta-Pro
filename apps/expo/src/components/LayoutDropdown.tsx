@@ -159,7 +159,6 @@ const LayoutDropdown = () => {
                         </Pressable>
                         <Pressable
                             onPress={() => {
-                                console.log('closing session')
                                 handleOpenLoading()
                                 if (isLoaded && signMethod !== 'undefined') {
                                     signOut()

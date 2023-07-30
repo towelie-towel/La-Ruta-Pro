@@ -100,12 +100,11 @@ const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, i
         { key: 'second', title: 'Second' },
     ]);
 
-    console.log("BottomSheet re-rendered")
-
     return (
         <BottomSheetModal
             ref={bottomSheetModalRef}
             index={1}
+            enableContentPanningGesture={false}
             snapPoints={snapPoints}
             backgroundStyle={{ borderRadius: 50, backgroundColor: colorScheme === 'light' ? 'rgba(203,213,225,0.8)' : 'rgba(26,18,11,0.5)' }}
             handleIndicatorStyle={{
