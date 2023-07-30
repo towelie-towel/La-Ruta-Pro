@@ -48,7 +48,7 @@ const selectableMarkerIcons = [
     }
 ]
 
-export type UserMarkerIconType = {
+export interface UserMarkerIconType {
     id: string,
     name: string,
     description?: string,
@@ -74,8 +74,8 @@ const SelectMarkerIcon: React.FC<{
     const [userMarkers, _setUserMarkers] = useAtom(userMarkersAtom)
 
     const [isSelectMarkerIconOpen, setIsSelectMarkerIconOpen] = useState(false);
-    const [selectMarkerWidth, setSelectMarkerWidth] = useState(40);
-    const [selectMarkerHeight, setSelectMarkerHeight] = useState(96);
+    const [selectMarkerWidth, setSelectMarkerWidth] = useState(96);
+    const [selectMarkerHeight, setSelectMarkerHeight] = useState(40);
     const addingMarkerDataRef = useRef<UserMarkerIconType>({
         // Fix this later, add a new method for creating ids
         id: Date.now().toString(),
@@ -83,7 +83,7 @@ const SelectMarkerIcon: React.FC<{
             latitude: 69.420,
             longitude: 69.420
         },
-        icon: selectableMarkerIcons.find(markerIcon => !userMarkers.some(marker => marker.icon.name === markerIcon.name)) || {
+        icon: selectableMarkerIcons.find(markerIcon => !userMarkers.some(marker => marker.icon.name === markerIcon.name)) ?? {
             type: "MCI",
             name: "airplane-marker"
         },
@@ -106,8 +106,8 @@ const SelectMarkerIcon: React.FC<{
                 property: 'scaleXY',
             },
         })
-        const newWidth = isSelectMarkerIconOpen ? 40 : 136;
-        const newHeight = isSelectMarkerIconOpen ? 96 : 216;
+        const newWidth = isSelectMarkerIconOpen ? 96 : 216;
+        const newHeight = isSelectMarkerIconOpen ? 40 : 136;
 
         setIsSelectMarkerIconOpen(!isSelectMarkerIconOpen)
         setSelectMarkerWidth(newWidth)
@@ -155,15 +155,16 @@ const SelectMarkerIcon: React.FC<{
             <TouchableWithoutFeedback>
                 <Pressable
                     onPress={!isSelectMarkerIconOpen ? toggleSelectMarkerIcon : undefined}
-                    className={'absolute z-20 bottom-24 bg-black dark:bg-white rounded-3xl flex-row items-center'}
+                    className={'absolute z-20 bottom-24 bg-white dark:bg-black rounded-3xl flex-row items-center'}
                     style={{
-                        height: selectMarkerWidth,
-                        width: selectMarkerHeight,
+                        height: selectMarkerHeight,
+                        width: selectMarkerWidth,
                         justifyContent: isSelectMarkerIconOpen ? 'center' : 'space-evenly',
                         flexWrap: isSelectMarkerIconOpen ? 'wrap' : 'nowrap',
                         flexDirection: isSelectMarkerIconOpen ? 'column' : 'row',
                         gap: isSelectMarkerIconOpen ? 6 : 0,
                         padding: isSelectMarkerIconOpen ? 8 : 0,
+                        left: (width / 2) - (selectMarkerWidth / 2),
                     }}
                 >
                     {
@@ -174,12 +175,12 @@ const SelectMarkerIcon: React.FC<{
                                 // @ts-ignore
                                 name={addingMarkerDataRef.current.icon.name}
                                 size={28}
-                                color={Colors[colorScheme === 'dark' ? 'light' : 'dark'].text}
+                                color={Colors[colorScheme].text}
                             />
                             <MaterialIcons
                                 name={'arrow-drop-up'}
                                 size={24}
-                                color={Colors[colorScheme === 'dark' ? 'light' : 'dark'].text}
+                                color={Colors[colorScheme].text}
                             />
                         </>
                     }
@@ -200,7 +201,7 @@ const SelectMarkerIcon: React.FC<{
                                             // @ts-ignore
                                             name={markerIcon.name}
                                             size={45}
-                                            color={Colors[colorScheme === 'dark' ? 'light' : 'dark'].text}
+                                            color={Colors[colorScheme].text}
                                         />
                                     </Pressable>
                                 )
@@ -212,7 +213,13 @@ const SelectMarkerIcon: React.FC<{
 
             <PressBtn
                 onPress={onConfirmInternal}
-                className={'absolute z-20 bottom-5 h-12 max-[367px]:h-8 w-[200px] max-[367px]:w-[180px] bg-[#FCCB6F] dark:bg-white rounded-3xl justify-center items-center'}
+                className={'h-12 max-[367px]:h-8 w-[200px] max-[367px]:w-[180px] bg-[#FCCB6F] dark:bg-white rounded-3xl justify-center items-center'}
+                style={{
+                    position: 'absolute',
+                    zIndex: 20,
+                    left: (width > 367) ? (width / 2) - 100 : (width / 2) - 90,
+                    bottom: 20,
+                }}
             >
                 <Text darkColor="black" className={'text-white dark:text-black font-bold text-lg max-[367px]:text-base'}>Confirmar</Text>
             </PressBtn>
