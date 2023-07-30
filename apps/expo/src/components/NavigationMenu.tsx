@@ -11,7 +11,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { PressBtn } from '../styles/PressBtn';
 import Colors from '../styles/Colors';
 
-type NavigationMenuParams = {
+interface NavigationMenuParams {
     navigationAnimValue: Animated.Value,
     toggleNavMenu: () => void,
     addMarkerHandler: () => void,
@@ -46,7 +46,7 @@ const NavigationMenu: React.FC<NavigationMenuParams> = ({ navigationAnimValue, t
                                 {
                                     translateY: navigationAnimValue.interpolate({
                                         inputRange: [0, 1],
-                                        outputRange: [0, -195]
+                                        outputRange: [0, -195],
                                     })
                                 }
                             ]
@@ -54,7 +54,7 @@ const NavigationMenu: React.FC<NavigationMenuParams> = ({ navigationAnimValue, t
                 >
                     <PressBtn
                         onPress={taxiBtnHandler}
-                        className={'h-14 w-14 justify-center items-center rounded-full border border-zinc-500'}
+                        className={'h-14 w-14 justify-center items-center rounded-full border-[1.5px] border-zinc-500'}
                     >
                         <MaterialIcons
                             name={'local-taxi'}
@@ -84,7 +84,7 @@ const NavigationMenu: React.FC<NavigationMenuParams> = ({ navigationAnimValue, t
                     }}
                 >
                     <PressBtn
-                        className={'h-14 w-14 justify-center items-center rounded-full border border-zinc-500'}
+                        className={'h-14 w-14 justify-center items-center rounded-full border-[1.5px] border-zinc-500'}
                         onPress={openUserProfileHandler}
                     >
                         <MaterialIcons
@@ -114,7 +114,7 @@ const NavigationMenu: React.FC<NavigationMenuParams> = ({ navigationAnimValue, t
                             ]
                     }}
                 >
-                    <PressBtn onPress={addMarkerHandler} className={'h-14 w-14 justify-center items-center rounded-full border border-zinc-500'}>
+                    <PressBtn onPress={addMarkerHandler} className={'h-14 w-14 justify-center items-center rounded-full border-[1.5px] border-zinc-500'}>
                         <MaterialIcons
                             name={'add-location-alt'}
                             size={40}
@@ -138,7 +138,7 @@ const NavigationMenu: React.FC<NavigationMenuParams> = ({ navigationAnimValue, t
                             ]
                     }}
                 >
-                    <Pressable onPress={toggleNavMenu} className={' h-16 w-16 justify-center items-center rounded-full border border-zinc-500'}>
+                    <Pressable onPress={toggleNavMenu} className={' h-16 w-16 justify-center items-center rounded-full border-[1.5px] border-zinc-500'}>
 
                         <MaterialIcons
                             name={'add'}
