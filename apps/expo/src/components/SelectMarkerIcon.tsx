@@ -155,7 +155,7 @@ const SelectMarkerIcon: React.FC<{
             <TouchableWithoutFeedback>
                 <Pressable
                     onPress={!isSelectMarkerIconOpen ? toggleSelectMarkerIcon : undefined}
-                    className={'absolute z-20 bottom-24 bg-white dark:bg-black rounded-3xl flex-row items-center'}
+                    className={'absolute z-20 bottom-24 bg-white rounded-3xl shadow-lg flex-row items-center'}
                     style={{
                         height: selectMarkerHeight,
                         width: selectMarkerWidth,
@@ -175,12 +175,12 @@ const SelectMarkerIcon: React.FC<{
                                 // @ts-ignore
                                 name={addingMarkerDataRef.current.icon.name}
                                 size={28}
-                                color={Colors[colorScheme].text}
+                                color={'black'}
                             />
                             <MaterialIcons
                                 name={'arrow-drop-up'}
                                 size={24}
-                                color={Colors[colorScheme].text}
+                                color={'black'}
                             />
                         </>
                     }
@@ -201,7 +201,7 @@ const SelectMarkerIcon: React.FC<{
                                             // @ts-ignore
                                             name={markerIcon.name}
                                             size={45}
-                                            color={Colors[colorScheme].text}
+                                            color={'black'}
                                         />
                                     </Pressable>
                                 )
