@@ -76,21 +76,22 @@ export default function Home() {
     const { isConnected, isInternetReachable, type: connectionType } = NetInfo.useNetInfo()
 
     const [profileRole, setProfileRole] = useAtom(profileRoleAtom)
-    const [profileState, _setProfileState] = useAtom(profileStateAtom)
-    const [signMethod, _setSignMethod] = useAtom(signMethodAtom)
+    const [profileState, setProfileState] = useAtom(profileStateAtom)
+    const [signMethod, setSignMethod] = useAtom(signMethodAtom)
 
     const { colorScheme } = useColorScheme();
 
-    const { animatedValue: pressMenuAnim, handlePressIn: pressInMenu, handlePressOut: pressOutMenu, isPressed: _isMenuPressed } = usePressIn()
+    const { animatedValue: pressMenuAnim, handlePressIn: pressInMenu, handlePressOut: pressOutMenu, isPressed: isMenuPressed } = usePressIn()
 
     return (
         <Drawer.Navigator
             screenOptions={{
 
                 drawerStyle: [{
-                    width: isLargeScreen ? width - (width / 4) : width - (width / 2),
-                    /* borderRightColor: colorScheme === 'dark' ? '#333333' : '#888888',
-                    borderRightWidth: 2, */
+                    width: isLargeScreen ? (width / 4) : (width / 2),
+                    minWidth: 200,
+                    borderRightColor: colorScheme === 'dark' ? '#333333' : '#888888',
+                    borderRightWidth: 1,
                 }],
                 drawerType: isLargeScreen ? 'permanent' : 'back',
                 overlayColor: 'transparent',
@@ -174,7 +175,6 @@ export default function Home() {
                                             color={Colors[colorScheme ?? 'light'].text}
                                         />
                                         <PressBtn onPress={() => {
-                                            console.log(signMethod)
                                             navigation.navigate(signMethod !== 'undefined' ? "Sign-In" : "Sign-Up")
                                         }} className={`w-[60px] max-w-[120px] ml-5 bg-slate-500 dark:bg-slate-700 rounded h-8 justify-center items-center`} >
                                             <Text className={`text-white`}>{signMethod !== 'undefined' ? "Sign In" : "Sign Up"}</Text>
