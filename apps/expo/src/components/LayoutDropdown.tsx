@@ -1,36 +1,40 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
     ActivityIndicator,
-    /* Platform,
-    TouchableWithoutFeedback, */
     LayoutAnimation,
     Pressable,
 } from 'react-native';
-
-import {
-    Text,/* , View */
-    View
-} from '../styles/Themed';
-import { Feather, MaterialIcons } from '@expo/vector-icons';
-import Colors from '../styles/Colors';
 import { useColorScheme } from 'nativewind';
+import { Feather, MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '@clerk/clerk-expo';
-import { useAtom } from 'jotai';
-import { signMethodAtom } from './Sign-up';
-import { PressBtn } from '../styles/PressBtn';
 import { BlurView } from 'expo-blur';
 
+import {
+    Text,
+    View
+} from '../styles/Themed';
+import Colors from '../styles/Colors';
+
 const LayoutDropdown = () => {
-    const [isOpen, setIsOpen] = React.useState(false);
+    const [isOpen, setIsOpen] = useState(false);
     const { colorScheme } = useColorScheme();
     const { isLoaded, signOut } = useAuth();
-
-    const [signMethod, setSignMethod] = useAtom(signMethodAtom)
 
     const [isLoading, setIsLoading] = useState(false)
 
     const [width, setWidth] = useState(32);
     const [height, setHeight] = useState(32);
+
+    const handleSignOut = async () => {
+        handleOpenLoading()
+        if (isLoaded) {
+            await signOut()
+                .catch((error) => {
+                    console.error(error)
+                })
+        }
+        handleCloseLoading()
+    }
 
     const handleOpenDropdown = () => {
         LayoutAnimation.configureNext({
@@ -158,19 +162,7 @@ const LayoutDropdown = () => {
                             <Text className='text-sm'>Close Loading</Text>
                         </Pressable>
                         <Pressable
-                            onPress={() => {
-                                handleOpenLoading()
-                                if (isLoaded && signMethod !== 'undefined') {
-                                    signOut()
-                                        .then(() => {
-                                            handleCloseLoading()
-                                        })
-                                        .catch((error) => {
-                                            console.error(error)
-                                            handleCloseLoading()
-                                        })
-                                }
-                            }}
+                            onPress={handleSignOut}
                             className='w-full flex-row justify-start items-center pl-2'
                         >
                             <MaterialIcons
