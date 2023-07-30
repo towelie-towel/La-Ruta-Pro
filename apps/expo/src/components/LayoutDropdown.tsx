@@ -46,7 +46,7 @@ const LayoutDropdown = () => {
             create: {
                 type: 'easeInEaseOut',
                 property: 'opacity',
-            },
+            }
         })
         setIsOpen(true)
         setWidth(150)
@@ -63,11 +63,11 @@ const LayoutDropdown = () => {
             delete: {
                 type: 'easeInEaseOut',
                 property: 'opacity',
-            },
+            }
         })
-        setIsOpen(false)
         setWidth(32)
         setHeight(32)
+        setIsOpen(false)
     };
 
     const handleOpenLoading = () => {
@@ -177,13 +177,10 @@ const LayoutDropdown = () => {
 
             </Pressable>
 
-            <Pressable
+            {isOpen && <Pressable
                 onPress={handleCloseDropdown}
-                style={{
-                    display: isOpen ? 'flex' : 'none',
-                }}
                 className='w-full h-full absolute z-20 opacity-20 bg-slate-500'
-            />
+            />}
 
         </>
     )
