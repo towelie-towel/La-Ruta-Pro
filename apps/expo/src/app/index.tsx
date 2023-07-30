@@ -1,136 +1,433 @@
-import React from "react";
-import { Button, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack, useRouter } from "expo-router";
-import { FlashList } from "@shopify/flash-list";
+import {
+    Image,
+    Dimensions,
+    ActivityIndicator,
+    Pressable,
+    Animated,
+    Keyboard,
+} from "react-native";
+import {
+    DrawerContentScrollView,
+    DrawerItem,
+    createDrawerNavigator
+} from '@react-navigation/drawer';
+import { useUser } from '@clerk/clerk-expo';
+import { AntDesign, FontAwesome, FontAwesome5, Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { useColorScheme } from 'nativewind';
+import NetInfo from '@react-native-community/netinfo';
+import { useAtom } from 'jotai'
 
-import { api } from "~/utils/api";
-import type { RouterOutputs } from "~/utils/api";
+import { View, Text } from '../styles/Themed';
+import { PressBtn } from '../styles/PressBtn';
+import Colors from '../styles/Colors';
 
-function PostCard(props: {
-  post: RouterOutputs["post"]["all"][number];
-  onDelete: () => void;
-}) {
-  const router = useRouter();
+import SignIn from "../components/Sign-in";
+import SignUp from "../components/Sign-up";
+import MapViewScreen from '../components/MapView';
+import HistoryScreen from '../components/History';
+import ConfigScreen from '../components/Config';
+import CustomServiceScreen from '../components/CustomService';
+import DeviceScreen from "../components/Device";
+import PaymentScreen from '../components/Payment';
+import NetworkScreen from "../components/Network";
+import AdminScreen from "../components/Admin";
+import { signMethodAtom } from "../components/Sign-up";
 
-  return (
-    <View className="flex flex-row rounded-lg bg-white/10 p-4">
-      <View className="flex-grow">
-        <TouchableOpacity onPress={() => router.push(`/post/${props.post.id}`)}>
-          <Text className="text-xl font-semibold text-pink-400">
-            {props.post.title}
-          </Text>
-          <Text className="mt-2 text-white">{props.post.content}</Text>
-        </TouchableOpacity>
-      </View>
-      <TouchableOpacity onPress={props.onDelete}>
-        <Text className="font-bold uppercase text-pink-400">Delete</Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
+import { profileRoleAtom, profileStateAtom } from "../hooks/useMapConnection";
+import usePressIn from '../hooks/usePressIn';
 
-function CreatePost() {
-  const utils = api.useContext();
+void Image.prefetch("https://lh3.googleusercontent.com/a/AAcHTtfPgVic8qF8hDw_WPE80JpGOkKASohxkUA8y272Ow=s1000-c")
 
-  const [title, setTitle] = React.useState("");
-  const [content, setContent] = React.useState("");
+const { width } = Dimensions.get("window");
 
-  const { mutate, error } = api.post.create.useMutation({
-    async onSuccess() {
-      setTitle("");
-      setContent("");
-      await utils.post.all.invalidate();
-    },
-  });
+/* 
+    
+    wtf AIzaSyB-7B_Jh6ZXK9jWiY-VjXbvxhx-4QeXbJU
 
-  return (
-    <View className="mt-4">
-      <TextInput
-        className="mb-2 rounded bg-white/10 p-2 text-white"
-        placeholderTextColor="rgba(255, 255, 255, 0.5)"
-        value={title}
-        onChangeText={setTitle}
-        placeholder="Title"
-      />
-      {error?.data?.zodError?.fieldErrors.title && (
-        <Text className="mb-2 text-red-500">
-          {error.data.zodError.fieldErrors.title}
-        </Text>
-      )}
-      <TextInput
-        className="mb-2 rounded bg-white/10 p-2 text-white"
-        placeholderTextColor="rgba(255, 255, 255, 0.5)"
-        value={content}
-        onChangeText={setContent}
-        placeholder="Content"
-      />
-      {error?.data?.zodError?.fieldErrors.content && (
-        <Text className="mb-2 text-red-500">
-          {error.data.zodError.fieldErrors.content}
-        </Text>
-      )}
-      <TouchableOpacity
-        className="rounded bg-pink-400 p-2"
-        onPress={() => {
-          mutate({
-            title,
-            content,
-          });
-        }}
-      >
-        <Text className="font-semibold text-white">Publish post</Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
+    wtf AIzaSyBVW-J8k9X8Y0gL5CK2Lhwz-w7Q2K5Yjn4
 
-const Index = () => {
-  const utils = api.useContext();
+*/
 
-  const postQuery = api.post.all.useQuery();
+const isAdmin = true;
 
-  const deletePostMutation = api.post.delete.useMutation({
-    onSettled: () => utils.post.all.invalidate(),
-  });
-
-  return (
-    <SafeAreaView className="bg-[#1F104A]">
-      {/* Changes page title visible on the header */}
-      <Stack.Screen options={{ title: "Home Page" }} />
-      <View className="h-full w-full p-4">
-        <Text className="mx-auto pb-2 text-5xl font-bold text-white">
-          Create <Text className="text-pink-400">T3</Text> Turbo
-        </Text>
-
-        <Button
-          onPress={() => void utils.post.all.invalidate()}
-          title="Refresh posts"
-          color={"#f472b6"}
-        />
-
-        <View className="py-2">
-          <Text className="font-semibold italic text-white">
-            Press on a post
-          </Text>
-        </View>
-
-        <FlashList
-          data={postQuery.data}
-          estimatedItemSize={20}
-          ItemSeparatorComponent={() => <View className="h-2" />}
-          renderItem={(p) => (
-            <PostCard
-              post={p.item}
-              onDelete={() => deletePostMutation.mutate(p.item.id)}
-            />
-          )}
-        />
-
-        <CreatePost />
-      </View>
-    </SafeAreaView>
-  );
+export type DrawerParamList = {
+    "Sign-In": undefined;
+    "Sign-Up": undefined;
+    "Map": undefined;
+    "History": undefined;
+    "Config": undefined;
+    "Network": undefined;
+    "Admin": undefined;
+    "Device": undefined;
+    "Service": undefined;
+    "Payment": undefined;
 };
 
-export default Index;
+const Drawer = createDrawerNavigator<DrawerParamList>();
+
+
+export default function Home() {
+
+    const isLargeScreen = width >= 768;
+
+    const { user, isLoaded, isSignedIn } = useUser();
+
+    const { isConnected, isInternetReachable, type: connectionType } = NetInfo.useNetInfo()
+
+    const [profileRole, setProfileRole] = useAtom(profileRoleAtom)
+    const [profileState, _setProfileState] = useAtom(profileStateAtom)
+    const [signMethod, _setSignMethod] = useAtom(signMethodAtom)
+
+    const { colorScheme } = useColorScheme();
+
+    const { animatedValue: pressMenuAnim, handlePressIn: pressInMenu, handlePressOut: pressOutMenu, isPressed: _isMenuPressed } = usePressIn()
+
+    return (
+        <Drawer.Navigator
+            screenOptions={{
+
+                drawerStyle: [{
+                    width: isLargeScreen ? width - (width / 4) : width - (width / 2),
+                    /* borderRightColor: colorScheme === 'dark' ? '#333333' : '#888888',
+                    borderRightWidth: 2, */
+                }],
+                drawerType: isLargeScreen ? 'permanent' : 'back',
+                overlayColor: 'transparent',
+                header({ navigation }) {
+                    return (
+                        <Animated.View
+                            className={'absolute top-9 left-10 max-[367px]:left-6'}
+                            style={[
+                                {
+                                    transform: [
+                                        {
+                                            scale: pressMenuAnim
+                                        }
+                                    ]
+                                },
+                            ]}
+                        >
+                            <Pressable
+                                onPressIn={() => {
+                                    pressInMenu();
+                                }}
+                                onPressOut={() => {
+                                    pressOutMenu();
+                                }}
+                                onPress={() => {
+                                    navigation.openDrawer();
+                                    Keyboard.dismiss()
+                                }}
+                                className={'p-3 rounded-full bg-transparent'}
+                            >
+                                <AntDesign
+                                    name={'menuunfold'}
+                                    size={30}
+                                    color={Colors[colorScheme ?? 'light'].text}
+                                />
+                            </Pressable>
+                        </Animated.View>
+                    )
+                },
+
+            }}
+            drawerContent={(props) => {
+                const { navigation } = props;
+                return (
+                    <DrawerContentScrollView
+                        contentContainerStyle={{
+                            position: 'relative',
+                            width: '100%',
+                            height: '100%',
+                            backgroundColor: colorScheme === 'dark' ? 'black' : 'white',
+                        }} {...props}
+                    >
+
+                        <DrawerItem style={{
+                            width: '100%',
+                            marginHorizontal: 0,
+                            marginVertical: 0,
+                            borderRadius: 0
+                        }} labelStyle={{
+                            width: '100%',
+                        }} pressColor={colorScheme === 'dark' ? 'white' : 'black'} icon={() => {
+
+                            if (!isLoaded) {
+                                return (
+                                    <View className={'w-full flex-row justify-start items-center bg-transparent px-5 max-[376px]:px-3 max-[376px]:my-0'}>
+                                        <ActivityIndicator
+                                            size={'large'}
+                                            animating
+                                            color={colorScheme === 'dark' ? 'white' : 'black'}
+                                        />
+                                    </View>
+                                )
+                            }
+
+                            if (!isSignedIn) {
+                                return (
+                                    <View className={'w-full flex-row justify-start items-center bg-transparent px-5 max-[376px]:px-3 max-[376px]:my-0'}>
+                                        <FontAwesome
+                                            name={colorScheme === 'light' ? 'user-circle' : 'user-circle-o'}
+                                            size={30}
+                                            color={Colors[colorScheme ?? 'light'].text}
+                                        />
+                                        <PressBtn onPress={() => {
+                                            console.log(signMethod)
+                                            navigation.navigate(signMethod !== 'undefined' ? "Sign-In" : "Sign-Up")
+                                        }} className={`w-[60px] max-w-[120px] ml-5 bg-slate-500 dark:bg-slate-700 rounded h-8 justify-center items-center`} >
+                                            <Text className={`text-white`}>{signMethod !== 'undefined' ? "Sign In" : "Sign Up"}</Text>
+                                        </PressBtn>
+                                    </View>
+                                )
+                            }
+
+                            return (
+                                <View className={`w-full justify-between flex-row items-center bg-transparent px-5 max-[376px]:px-3 max-[376px]:my-0`}>
+
+                                    <View className="w-full bg-transparent flex-row items-center">
+                                        <Image
+                                            source={{
+                                                uri: "https://lh3.googleusercontent.com/a/AAcHTtfPgVic8qF8hDw_WPE80JpGOkKASohxkUA8y272Ow=s1000-c"
+                                            }}
+                                            alt="Profile Image"
+                                            className={`w-8 h-8 rounded-full`}
+                                        />
+                                        <Text className="ml-5">{`${user.firstName} ${user.lastName}`}</Text>
+                                    </View>
+                                    <View className="absolute items-center justify-center bg-transparent top-0 right-1 flex-row gap-2">
+                                        <View style={{
+                                            backgroundColor: isConnected && isInternetReachable ? 'rgb(74 222 128)' : 'rgb(248 113 113)'
+                                        }} className="w-2 h-2 rounded-full"></View>
+                                        {
+                                            connectionType.includes('wifi')
+                                                ? (
+                                                    <MaterialIcons
+                                                        name='wifi'
+                                                        size={10}
+                                                        color={Colors[colorScheme ?? 'light'].text}
+                                                    />
+                                                )
+                                                : (
+                                                    <MaterialIcons
+                                                        name='network-cell'
+                                                        size={10}
+                                                        color={Colors[colorScheme ?? 'light'].text}
+                                                    />
+                                                )
+                                        }
+                                    </View>
+
+                                </View>
+
+                            )
+
+                        }} label={'Sign-In'} onPress={() => { console.log(signMethod) }} />
+
+                        <DrawerItem style={{
+                            width: '100%',
+                            marginHorizontal: 0,
+                            marginVertical: 0,
+                            borderRadius: 0
+                        }} pressColor={colorScheme === 'dark' ? 'white' : 'black'} icon={() => {
+                            return (
+                                <View className={`w-full my-2 flex-row justify-start items-center bg-transparent px-5 max-[376px]:px-3 max-[376px]:my-0`}>
+                                    <Ionicons
+                                        name={colorScheme === 'light' ? 'md-map-outline' : 'md-map'}
+                                        size={30}
+                                        color={Colors[colorScheme ?? 'light'].text}
+                                    />
+                                    <Text className="ml-5">Mapa</Text>
+                                </View>
+                            )
+                        }} label={'Mapa'} onPress={() => { navigation.navigate('Map') }} />
+
+                        <DrawerItem style={{
+                            width: '100%',
+                            marginHorizontal: 0,
+                            marginVertical: 0,
+                            borderRadius: 0,
+                        }} pressColor={colorScheme === 'dark' ? 'white' : 'black'} icon={() => {
+                            return (
+                                <View className={`w-full my-2 flex-row justify-start items-center bg-transparent px-5 max-[376px]:px-3 max-[376px]:my-0`}>
+                                    <MaterialIcons
+                                        name='history'
+                                        size={30}
+                                        color={Colors[colorScheme ?? 'light'].text}
+                                    />
+                                    <Text className="ml-5">History</Text>
+                                </View>
+                            )
+                        }} label={'History'} onPress={() => { navigation.navigate('History') }} />
+
+                        <DrawerItem style={{
+                            width: '100%',
+                            marginHorizontal: 0,
+                            marginVertical: 0,
+                            borderRadius: 0
+                        }} pressColor={colorScheme === 'dark' ? 'white' : 'black'} icon={() => {
+                            return (
+                                <View className={`w-full my-2 flex-row justify-start items-center bg-transparent px-5 max-[376px]:px-3 max-[376px]:my-0`}>
+                                    <FontAwesome
+                                        name='gear'
+                                        size={30}
+                                        color={Colors[colorScheme ?? 'light'].text}
+                                    />
+                                    <Text className="ml-6">Config</Text>
+                                </View>
+                            )
+                        }} label={'Config'} onPress={() => { navigation.navigate('Config') }} />
+
+                        <DrawerItem style={{
+                            width: '100%',
+                            marginHorizontal: 0,
+                            marginVertical: 0,
+                            borderRadius: 0
+                        }} pressColor={colorScheme === 'dark' ? 'white' : 'black'} icon={() => {
+                            return (
+                                <View className={`w-full my-2 flex-row justify-start items-center bg-transparent px-5 max-[376px]:px-3 max-[376px]:my-0`}>
+                                    <AntDesign
+                                        name='customerservice'
+                                        size={30}
+                                        color={Colors[colorScheme ?? 'light'].text}
+                                    />
+                                    <Text className="ml-5">Service</Text>
+                                </View>
+                            )
+                        }} label={'Service'} onPress={() => { navigation.navigate('Service') }} />
+
+                        <DrawerItem style={{
+                            width: '100%',
+                            marginHorizontal: 0,
+                            marginVertical: 0,
+                            borderRadius: 0
+                        }} pressColor={colorScheme === 'dark' ? 'white' : 'black'} icon={() => {
+                            return (
+                                <View className={`w-full my-2 flex-row justify-start items-center bg-transparent px-5 max-[376px]:px-3 max-[376px]:my-0`}>
+                                    <FontAwesome5
+                                        name='money-check'
+                                        size={24}
+                                        color={Colors[colorScheme ?? 'light'].text}
+                                    />
+                                    <Text className="ml-5">Payment</Text>
+                                </View>
+                            )
+                        }} label={'Payment'} onPress={() => { navigation.navigate('Payment') }} />
+
+                        {
+                            isAdmin &&
+                            <>
+                                <DrawerItem style={{
+                                    width: '100%',
+                                    marginHorizontal: 0,
+                                    marginVertical: 0,
+                                    borderRadius: 0
+                                }} pressColor={colorScheme === 'dark' ? 'white' : 'black'} icon={() => {
+                                    return (
+                                        <View className={`w-full my-2 flex-row justify-start items-center bg-transparent px-5 max-[376px]:px-3 max-[376px]:my-0`}>
+                                            <MaterialIcons
+                                                name='admin-panel-settings'
+                                                size={30}
+                                                color={Colors[colorScheme ?? 'light'].text}
+                                            />
+                                            <Text className="ml-5">Admin Info</Text>
+                                        </View>
+                                    )
+                                }} label={'Admin'} onPress={() => { navigation.navigate('Admin') }} />
+
+                                <DrawerItem style={{
+                                    width: '100%',
+                                    marginHorizontal: 0,
+                                    marginVertical: 0,
+                                    borderRadius: 0
+                                }} pressColor={colorScheme === 'dark' ? 'white' : 'black'} icon={() => {
+                                    return (
+                                        <View className={`w-full my-2 flex-row justify-start items-center bg-transparent px-5 max-[376px]:px-3 max-[376px]:my-0`}>
+                                            <MaterialIcons
+                                                name='perm-device-information'
+                                                size={30}
+                                                color={Colors[colorScheme ?? 'light'].text}
+                                            />
+                                            <Text className="ml-5">Device Info</Text>
+                                        </View>
+                                    )
+                                }} label={'Device'} onPress={() => { navigation.navigate('Device') }} />
+
+                                <DrawerItem style={{
+                                    width: '100%',
+                                    marginHorizontal: 0,
+                                    marginVertical: 0,
+                                    borderRadius: 0
+                                }} pressColor={colorScheme === 'dark' ? 'white' : 'black'} icon={() => {
+                                    return (
+                                        <View className={`w-full my-2 flex-row justify-start items-center bg-transparent px-5 max-[376px]:px-3 max-[376px]:my-0`}>
+                                            <MaterialIcons
+                                                name='network-cell'
+                                                size={30}
+                                                color={Colors[colorScheme ?? 'light'].text}
+                                            />
+                                            <Text className="ml-5">Network</Text>
+                                        </View>
+                                    )
+                                }} label={'Network'} onPress={() => { navigation.navigate('Network') }} />
+                            </>
+                        }
+
+
+                        <DrawerItem style={{
+                            width: '100%',
+                            marginHorizontal: 0,
+                            marginVertical: 0,
+                            position: 'absolute',
+                            bottom: 0,
+                            borderRadius: 0
+                        }} pressColor={colorScheme === 'dark' ? 'white' : 'black'} icon={() => (
+                            <View className="w-full flex-row justify-around items-center bg-transparent">
+                                <PressBtn onPress={() => {
+                                    void setProfileRole('client')
+                                }}  >
+                                    <AntDesign
+                                        name='instagram'
+                                        size={25}
+                                        color={Colors[colorScheme ?? 'light'].text}
+                                    />
+                                </PressBtn><PressBtn onPress={() => {
+                                    void setProfileRole('taxi')
+                                }}  >
+                                    <AntDesign
+                                        name='facebook-square'
+                                        size={25}
+                                        color={Colors[colorScheme ?? 'light'].text}
+                                    />
+                                </PressBtn><PressBtn onPress={() => {
+                                    console.log("profileRole", { profileRole, profileState })
+                                }}  >
+                                    <AntDesign
+                                        name='twitter'
+                                        size={25}
+                                        color={Colors[colorScheme ?? 'light'].text}
+                                    />
+                                </PressBtn>
+                            </View>
+                        )} label={'Social Networks'} onPress={() => { console.log("Social Networks") }} />
+
+                    </DrawerContentScrollView>
+                )
+            }}
+            initialRouteName="Map"
+        >
+
+            <Drawer.Screen name="Sign-In" component={SignIn} />
+            <Drawer.Screen name="Sign-Up" component={SignUp} />
+            <Drawer.Screen name="Map" component={MapViewScreen} />
+            <Drawer.Screen name="History" component={HistoryScreen} />
+            <Drawer.Screen name="Config" component={ConfigScreen} />
+            <Drawer.Screen name="Network" component={NetworkScreen} />
+            <Drawer.Screen name="Admin" component={AdminScreen} />
+            <Drawer.Screen name="Device" component={DeviceScreen} />
+            <Drawer.Screen name="Service" component={CustomServiceScreen} />
+            <Drawer.Screen name="Payment" component={PaymentScreen} />
+
+        </Drawer.Navigator>
+    );
+}

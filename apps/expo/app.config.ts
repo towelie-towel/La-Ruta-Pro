@@ -1,17 +1,16 @@
 import type { ExpoConfig } from "@expo/config";
 
 const defineConfig = (): ExpoConfig => ({
-  name: "expo",
-  slug: "expo",
-  scheme: "expo",
+  name: "La Ruta",
+  slug: "la-ruta",
+  scheme: "la-ruta-app",
   version: "1.0.0",
   orientation: "portrait",
   icon: "./assets/icon.png",
-  userInterfaceStyle: "light",
+  userInterfaceStyle: "automatic",
   splash: {
-    image: "./assets/icon.png",
-    resizeMode: "contain",
-    backgroundColor: "#1F104A",
+    image: "./assets/splash.png",
+    backgroundColor: "#FCCB6F",
   },
   updates: {
     fallbackToCacheTimeout: 0,
@@ -19,17 +18,30 @@ const defineConfig = (): ExpoConfig => ({
   assetBundlePatterns: ["**/*"],
   ios: {
     supportsTablet: true,
-    bundleIdentifier: "your.bundle.identifier",
+    bundleIdentifier: "com.cubastore.laruta",
+    entitlements: {
+      "com.apple.developer.networking.wifi-info": true // https://docs.expo.dev/versions/latest/sdk/netinfo/
+    },
   },
   android: {
     adaptiveIcon: {
-      foregroundImage: "./assets/icon.png",
-      backgroundColor: "#1F104A",
+      foregroundImage: "./assets/adaptive-icon.png",
+      backgroundColor: "#FCCB6F",
     },
+    config: {
+      googleMaps: {
+        // @ts-ignore
+        apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_APIKEY ?? "",
+      }
+    },
+    package: "com.cubastore.laruta",
+  },
+  web: {
+    bundler: "metro"
   },
   extra: {
     eas: {
-      // projectId: "your-project-id",
+      projectId: "6672061b-f930-433e-81a0-6ef06407692c",
     },
   },
   experiments: {
@@ -37,5 +49,44 @@ const defineConfig = (): ExpoConfig => ({
   },
   plugins: ["./expo-plugins/with-modify-gradle.js"],
 });
+
+/* 
+expo-location:
+{
+  "expo": {
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
+        }
+      ]
+    ]
+  }
+}
+
+expo-notifications:
+https://github.com/expo/expo/tree/sdk-49/packages/expo-notifications
+{
+  "expo": {
+    ...
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./local/path/to/myNotificationIcon.png",
+          "color": "#ffffff",
+          "sounds": ["./local/path/to/mySound.wav", "./local/path/to/myOtherSound.wav"],
+          "mode": "production"
+        }
+      ]
+    ],
+  }
+}
+
+
+plugins: ["./expo-plugins/with-modify-gradle.js", "expo-router"],
+
+*/
 
 export default defineConfig;
