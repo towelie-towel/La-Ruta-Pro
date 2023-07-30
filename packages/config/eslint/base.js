@@ -29,7 +29,7 @@ const config = {
       2,
       { checksVoidReturn: { attributes: false } },
     ],
-    "import/consistent-type-specifier-style": ["error", "prefer-top-level"],
+    /* "import/consistent-type-specifier-style": ["error", "prefer-top-level"], */
   },
   ignorePatterns: [
     "**/.eslintrc.cjs",
