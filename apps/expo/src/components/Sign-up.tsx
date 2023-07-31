@@ -1,34 +1,26 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-    /* NativeModules,
-    Pressable, */
     LayoutAnimation,
     TextInput,
     useColorScheme,
     ActivityIndicator
 } from 'react-native';
-import { View, Text } from '../styles/Themed';
-import { useSignUp } from "@clerk/clerk-expo";
-import { Stack } from 'expo-router';
+import { useSignUp, useAuth } from "@clerk/clerk-expo";
+import { Stack, usePathname, useRouter } from 'expo-router';
 import { type DrawerNavigationProp } from '@react-navigation/drawer';
-import { PressBtn } from '../styles/PressBtn';
-import SignWithOAuth from './SignWithOAuth';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useAtom } from 'jotai'
+import { atomWithStorage, createJSONStorage } from 'jotai/utils'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import TuRutaLogo from '../../assets/Logo.png'
 import { type DrawerParamList } from '../app';
+import { View, Text } from '../styles/Themed';
+import { PressBtn } from '../styles/PressBtn';
+import SignWithOAuth from './SignWithOAuth';
 import Colors from '../styles/Colors';
-
-// import { useUser } from '@clerk/clerk-expo';
-
-import { useAtom/* , atom  */ } from 'jotai'
-import { atomWithStorage, createJSONStorage } from 'jotai/utils'
-
-import AsyncStorage from '@react-native-async-storage/async-storage'
-// import NetInfo from '@react-native-community/netinfo';
-
 
 const storedSignMethod = createJSONStorage<'oauth' | 'password' | 'undefined'>(() => AsyncStorage)
 export const signMethodAtom = atomWithStorage<'oauth' | 'password' | 'undefined'>('signMethod', 'undefined', storedSignMethod)
@@ -36,36 +28,38 @@ export const signMethodAtom = atomWithStorage<'oauth' | 'password' | 'undefined'
 export default function SignUp({ navigation }: { navigation?: DrawerNavigationProp<DrawerParamList> }) {
 
     const { isLoaded, signUp, setActive } = useSignUp();
+    const { isSignedIn } = useAuth();
     const colorScheme = useColorScheme();
+    const pathName = usePathname()
+    const { back, replace } = useRouter()
+    const isOnSignUpRoute = pathName.includes("sign-up")
 
     const [isLoading, setIsLoading] = useState(false);
-
     const [email, setEmail] = useState('');
-    const [emailError, _setEmailError] = useState('');
-
+    const [emailError, setEmailError] = useState('');
     const [oauthCompleted, setOauthCompleted] = useState(false)
     const [isInfoProvided, setIsInfoProvided] = useState(false)
-
     const [firstName, setFirstName] = useState('');
-    const [firstNameError, _setFirstNameError] = useState('');
-
+    const [firstNameError, setFirstNameError] = useState('');
     const [lastName, setLastName] = useState('');
-    const [lastNameError, _setLastNameError] = useState('');
-
+    const [lastNameError, setLastNameError] = useState('');
     const [password, setPassword] = useState('');
-    const [passwordError, _setPasswordError] = useState('');
-
+    const [passwordError, setPasswordError] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [pendingVerification, setPendingVerification] = useState(false);
     const [isPhoneVerified, setIsPhoneVerified] = useState(false)
     const [phoneError, setPhoneError] = useState('');
-
     const [code, setCode] = useState("");
-    const [codeError, _setCodeError] = useState('');
-
+    const [codeError, setCodeError] = useState('');
     const [isReduced, setIsReduced] = useState(false)
-
     const [signMethod, setSignMethod] = useAtom(signMethodAtom);
+
+    useEffect(() => {
+        console.log("open Sign-up")
+        return () => {
+            console.log("closing Sign-up")
+        }
+    }, [])
 
     const reduceLogo = () => {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -80,7 +74,7 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
         }
 
         // Check if the first digit is 5
-        if (phoneNumber.charAt(0) !== '5') {
+        if (!phoneNumber.startsWith('5')) {
             setPhoneError('Su número no comienza por 5 😐')
             return false;
         }
@@ -100,25 +94,29 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
     function isValidEmail(value: string): boolean {
         // Check if the value ends with "gmail.com"
         if (!value.endsWith("gmail.com")) {
+            setEmailError("El email no termina en gmail.com")
             return false;
         }
 
         // Check if there is at least one character before "@"
         const atIndex = value.indexOf("@");
         if (atIndex <= 0) {
+            setEmailError("there is at least one character before @")
             return false;
         }
 
         // Check if there is at least one character between "@" and "."
-        const dotIndex = value.indexOf(".");
+        /* const dotIndex = value.indexOf(".");
         if (dotIndex - atIndex <= 1) {
+            setEmailError("there is at least one character between @ and .")
             return false;
-        }
+        } */
 
         // Check if there is at least one character after "."
-        if (dotIndex === value.length - 1) {
+        /* if (dotIndex === value.length - 1) {
+            setEmailError("there is at least one character after .")
             return false;
-        }
+        } */
 
         // If all checks pass, return true
         return true;
@@ -172,9 +170,13 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
             setIsPhoneVerified(true)
             setPendingVerification(false);
             setIsLoading(false);
-            setSignMethod(oauthCompleted ? "oauth" : "password")
+            void setSignMethod(oauthCompleted ? "oauth" : "password")
 
-            navigation?.navigate('Map');
+            /* if (isOnSignUpRoute) {
+                back()
+            } else {
+                navigation?.navigate('Map')
+            } */
         } catch (err) {
             console.error(JSON.stringify(err, null, 2));
             setIsLoading(false);
@@ -193,7 +195,8 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
             const isEmailValid = isValidEmail(email.trim())
 
             if (!isEmailValid) {
-                throw new Error("email is invalid")
+                console.error(emailError)
+                throw new Error(emailError)
             }
 
             await signUp.create({
@@ -213,18 +216,20 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
         }
     };
 
-    /* if (signMethod) {
-        return (
-            <>
-                
-            </>
-        )
-    } */
+    if (isSignedIn) {
+        if (isOnSignUpRoute) {
+            console.log(`SignUp_signed_Render - path_${pathName} - action_replace('/')`)
+            replace('/')
+        } else {
+            console.log(`SignUp_signed_Render - path_${pathName} - action_navigation?.navigate('Map')`)
+            navigation?.navigate('Map')
+        }
+    }
 
     return (
         <View className={'w-full h-full justify-center items-center'}>
             <Stack.Screen options={{
-                title: 'Sign Up',
+                title: 'Cuenta Nueva',
             }} />
 
             <View
@@ -347,10 +352,17 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
             {!oauthCompleted && !isInfoProvided && (
                 <>
                     <SignWithOAuth afterOauthFlow={() => {
-
-                        LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
-                        setOauthCompleted(true)
-
+                        console.log(`SignUp_afterOauthFlow - path_${pathName} - isSignedIn_${isSignedIn}`)
+                        if (isSignedIn) {
+                            /* if (isOnSignUpRoute) {
+                                replace('/')
+                            } else {
+                                navigation?.navigate('Map')
+                            } */
+                        } else {
+                            LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
+                            setOauthCompleted(true)
+                        }
                     }} action={'sign-up'} phoneNumber={phoneNumber} password={password} isReduced={isReduced} isPhoneVerified={isPhoneVerified} SignUp={signUp} />
                     <View className={'w-4/5 max-[367px]:w-2/3 mb-4 max-[367px]:mb-2 justify-center items-center relative'}>
                         <TextInput
@@ -465,7 +477,16 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
                 </>
             )}
 
-            <PressBtn className={'flex-row items-center justify-center mt-2'} onPress={() => { navigation && navigation?.jumpTo('Sign-In') }}>
+            <PressBtn
+                className={'flex-row items-center justify-center mt-2'}
+                onPress={() => {
+                    if (isOnSignUpRoute) {
+                        replace('auth/sign-in')
+                    } else {
+                        navigation?.navigate('Sign-In')
+                    }
+                }}
+            >
                 <Text className={'text-sm max-[367px]:text-xs font-light dark:text-gray-400'}>Ya Tienes Cuenta?</Text>
                 <Text className={'text-[#2e78b7] font-normal ml-1 text-sm max-[367px]:text-xs'}>Inicia Sesión</Text>
             </PressBtn>

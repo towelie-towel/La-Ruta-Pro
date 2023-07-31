@@ -1,11 +1,9 @@
 /* eslint-disable */
-import { useOAuth } from "@clerk/clerk-expo";
-import React, { useEffect, useState } from "react";
+import { useOAuth, useAuth } from "@clerk/clerk-expo";
+import { useEffect, useState, useCallback } from "react";
 import * as WebBrowser from "expo-web-browser";
 import * as AuthSession from 'expo-auth-session'
 import { Svg, Defs, G, Path } from "react-native-svg";
-import { Text, View } from "../styles/Themed";
-import { PressBtn } from "../styles/PressBtn";
 import { AntDesign } from '@expo/vector-icons';
 import { useColorScheme } from "nativewind";
 import {
@@ -13,23 +11,26 @@ import {
   Dimensions,
   Platform
 } from "react-native";
+import { usePathname } from "expo-router";
+
+import { Text, View } from "../styles/Themed";
+import { PressBtn } from "../styles/PressBtn";
 
 /* const config = {
     authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
     clientId: '795271227886-uq0n8g7p4j1h2i7h7d7n1h4hq7uj6q1.apps.googleusercontent.com',
 } */
 
-
 const SignWithOAuth = ({ action = 'sign-in', phoneNumber, password, isReduced = false, isPhoneVerified, SignUp, afterOauthFlow }: { action?: 'sign-in' | 'sign-up', phoneNumber?: string, password?: string, isReduced?: boolean, isPhoneVerified?: boolean, SignUp?: any, afterOauthFlow?: () => void }) => {
 
+  const pathName = usePathname()
   const redirectUrl = AuthSession.makeRedirectUri({
-    path: '/',
+    path: pathName,
   })
-
   const { startOAuthFlow: googleOAuthFlow } = useOAuth({ strategy: "oauth_google", redirectUrl: redirectUrl });
   const { startOAuthFlow: appleOAuthFlow } = useOAuth({ strategy: "oauth_apple" });
-  const { colorScheme } = useColorScheme()
   const { width, height } = Dimensions.get('window')
+  const { colorScheme } = useColorScheme()
 
   const [btnsWidth, setBtnsWidth] = useState(width > 375 ? 240 : 170)
   const [containerWidth, setContainerWidth] = useState(width > 375 ? 240 : 170)
@@ -57,7 +58,7 @@ const SignWithOAuth = ({ action = 'sign-in', phoneNumber, password, isReduced = 
     }
   }, [isReduced]);
 
-  const googleSignHandler = React.useCallback(async () => {
+  const googleSignHandler = useCallback(async () => {
     try {
       const { createdSessionId, signIn, signUp, setActive } =
         await googleOAuthFlow();
@@ -82,7 +83,7 @@ const SignWithOAuth = ({ action = 'sign-in', phoneNumber, password, isReduced = 
     }
   }, []);
 
-  const appleSignHandler = React.useCallback(async () => {
+  const appleSignHandler = useCallback(async () => {
     try {
       const { createdSessionId, signIn, signUp, setActive } =
         await appleOAuthFlow();
@@ -106,7 +107,6 @@ const SignWithOAuth = ({ action = 'sign-in', phoneNumber, password, isReduced = 
         width: containerWidth,
       }}
     >
-
       {Platform.OS !== 'ios' && <View
         className='absolute top-0 left-0'
         style={{

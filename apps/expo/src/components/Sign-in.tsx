@@ -1,43 +1,50 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     LayoutAnimation, TextInput, ActivityIndicator, KeyboardAvoidingView,
 } from 'react-native';
-import { View, Text } from '../styles/Themed';
-import { useSignIn } from "@clerk/clerk-expo";
-import { Stack } from 'expo-router';
+import { useAuth, useSignIn } from "@clerk/clerk-expo";
+import { Stack, usePathname, useRouter } from 'expo-router';
 import { type DrawerNavigationProp } from '@react-navigation/drawer';
-import { PressBtn } from '../styles/PressBtn';
-import SignWithOAuth from './SignWithOAuth';
 import { Image } from 'expo-image';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useColorScheme } from "nativewind";
-import Colors from '../styles/Colors';
+import { useAtom } from 'jotai'
+
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import TuRutaLogo from '../../assets/Logo.png'
 import { type DrawerParamList } from '../app';
+import { PressBtn } from '../styles/PressBtn';
+import { View, Text } from '../styles/Themed';
+import Colors from '../styles/Colors';
+import SignWithOAuth from './SignWithOAuth';
 
-import { useAtom/* , atom  */ } from 'jotai'
 import { signMethodAtom } from './Sign-up';
 
 export default function SignIn({ navigation }: { navigation?: DrawerNavigationProp<DrawerParamList> }) {
 
+    const { isSignedIn } = useAuth()
     const { signIn, setActive, isLoaded } = useSignIn();
-
     const { colorScheme } = useColorScheme();
-    const passWordRef = useRef<TextInput>(null)
+    const pathName = usePathname()
+    const { back, replace } = useRouter()
+    const isOnSignInRoute = pathName.includes("sign-in")
 
+    const passWordRef = useRef<TextInput>(null)
     const [credential, setCredential] = useState('');
     const [credentialError, _setCredentialError] = useState('');
-
     const [password, setPassword] = useState('');
     const [passwordError, _setPasswordError] = useState('');
-
     const [isLoading, setIsLoading] = useState(false);
-
     const [isReduced, setIsReduced] = useState(false)
-
     const [signMethod, _setSignMethod] = useAtom(signMethodAtom);
+
+    useEffect(() => {
+        console.log("open Sign-in")
+        return () => {
+            console.log("closing Sign-in")
+        }
+    }, [])
 
     const reduceLogo = () => {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -60,17 +67,32 @@ export default function SignIn({ navigation }: { navigation?: DrawerNavigationPr
             await setActive({ session: completeSignIn.createdSessionId });
 
             setIsLoading(false);
-            navigation?.navigate('Map')
+
+            /* if (isOnSignInRoute) {
+                back()
+            } else {
+                navigation?.navigate('Map')
+            } */
         } catch (err) {
             console.error(JSON.stringify(err, null, 2));
             setIsLoading(false);
         }
     }
 
+    if (isSignedIn) {
+        if (isOnSignInRoute) {
+            console.log(`SignIn_signed_Render - path_${pathName} - action_replace('/')`)
+            replace('/')
+        } else {
+            console.log(`SignIn_signed_Render - path_${pathName} - action_navigation?.navigate('Map')`)
+            navigation?.navigate('Map')
+        }
+    }
+
     return (
         <View className={'w-full h-full justify-center items-center'}>
             <Stack.Screen options={{
-                title: 'Sign In',
+                title: 'Inicio de Sesión',
             }} />
 
             <View
@@ -96,7 +118,12 @@ export default function SignIn({ navigation }: { navigation?: DrawerNavigationPr
             <KeyboardAvoidingView behavior="height" className='w-full justify-center items-center'>
                 <SignWithOAuth action={'sign-in'} isReduced={isReduced}
                     afterOauthFlow={() => {
-                        navigation?.navigate('Map')
+                        console.log(`SignIn_afterOauthFlow - path_${pathName} - isSignedIn_${isSignedIn}`)
+                        if (!isOnSignInRoute) {
+                            back()
+                        } else {
+                            navigation?.navigate('Map')
+                        }
                     }}
                 />
                 <View className={'w-4/5 max-[367px]:w-2/3 mb-4 max-[367px]:mb-2 relative justify-center items-center'}>
@@ -165,8 +192,11 @@ export default function SignIn({ navigation }: { navigation?: DrawerNavigationPr
                 </PressBtn>
                 <PressBtn className={'flex-row items-center justify-center my-2'}
                     onPress={() => {
-                        LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
-                        navigation && navigation.navigate('Sign-Up');
+                        if (isOnSignInRoute) {
+                            replace('auth/sign-up')
+                        } else {
+                            navigation?.navigate('Sign-Up')
+                        }
                     }}
                 >
                     <Text className={'text-sm max-[367px]:text-xs font-light dark:text-gray-400'}>No Tienes Cuenta?</Text>
