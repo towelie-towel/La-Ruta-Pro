@@ -1,18 +1,16 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-    Image,
     Animated,
     StatusBar,
     Dimensions,
     LayoutAnimation,
 } from "react-native";
-import MapView, { type MapMarker, type Region, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { /* type MapMarker, */ type Region, PROVIDER_GOOGLE } from 'react-native-maps';
 import { type BottomSheetModal, BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { useAtom, } from 'jotai';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useColorScheme } from 'nativewind';
 
-// import { profileRoleAtom, profileStateAtom } from "../hooks/useMapConnection";
 import useMapConnection from '../hooks/useMapConnection';
 import { type MarkerData } from '../constants/Markers';
 
@@ -28,14 +26,7 @@ import AnimatedRouteMarker from './AnimatedRouteMarker';
 import BottomSheet from './BottomSheeetModal';
 import NavigationMenu from './NavigationMenu';
 
-void Image.prefetch("https://lh3.googleusercontent.com/a/AAcHTtfPgVic8qF8hDw_WPE80JpGOkKASohxkUA8y272Ow=s1000-c")
-
 const MapViewComponent = () => {
-
-    const renderCount = useRef(0);
-    console.clear();
-    console.log(`MapView re-render # ${renderCount.current}`);
-    renderCount.current += 1;
 
     useKeepAwake();
     const { colorScheme } = useColorScheme();
@@ -50,10 +41,8 @@ const MapViewComponent = () => {
     const [isAddingMarker, setIsAddingMarker] = useState(false);
 
     const mapViewRef = useRef<MapView>(null);
-    const userMarkerRef = useRef<MapMarker>(null);
+    // const userMarkerRef = useRef<MapMarker>(null);
     const [userMarkers, setUserMarkers] = useAtom(userMarkersAtom)
-    // const [profileRole, setProfileRole] = useAtom(profileRoleAtom)
-    // const [profileState, setProfileState] = useAtom(profileStateAtom)
 
     const [userSelected, setUserSelected] = useState(true);
     const [selectedMarkerIndex, setSelectedMarkerIndex] = useState<number | null>(null);
@@ -158,12 +147,13 @@ const MapViewComponent = () => {
         bottomSheetModalRef.current?.present();
         setUserSelected(true)
         setIsModalVisible(true);
+        setSelectedMarkerIndex(null);
         if (isMenuOpen) {
             toggleNavMenu()
         }
     }, [isMenuOpen, toggleNavMenu])
 
-    const taxiBtnHandler = useCallback(() => { }, [])
+    const taxiBtnHandler = useCallback(() => { console.log("grab a taxi") }, [])
 
     return (
         <BottomSheetModalProvider>
@@ -200,27 +190,50 @@ const MapViewComponent = () => {
 
                     {markers.map((marker: MarkerData, index: number) => {
                         return (
-                            <CarMarker key={index} onPress={() => handleMarkerPress(index)} coordinate={marker.coordinate} description='' title='' imageURL='' />
+                            <CarMarker
+                                key={index}
+                                onPress={() => handleMarkerPress(index)}
+                                coordinate={marker.coordinate}
+                                description=''
+                                title=''
+                                imageURL=''
+                            />
                         );
                     })}
 
                     {
                         userMarkers.map((userMarker, index) => {
                             return (
-                                <UserMarkerIcon {...userMarker} key={index} colorScheme={colorScheme} />
+                                <UserMarkerIcon
+                                    {...userMarker}
+                                    key={index}
+                                    colorScheme={colorScheme}
+                                />
                             )
                         })
                     }
 
                     <AnimatedRouteMarker />
 
-                    {location && <UserMarker onPress={openUserProfileHandler} coordinate={location.coords} description='' title='' userId='' heading={heading} />}
+                    {
+                        location &&
+                        <UserMarker
+                            onPress={openUserProfileHandler}
+                            coordinate={location.coords}
+                            description=''
+                            title=''
+                            userId=''
+                            heading={heading}
+                        />
+                    }
 
                 </MapView>
 
                 {
                     isAddingMarker &&
-                    <SelectMarkerIcon onConfirmFn={confirmAddMarkerIcon} />
+                    <SelectMarkerIcon
+                        onConfirmFn={confirmAddMarkerIcon}
+                    />
                 }
 
                 {
@@ -234,7 +247,13 @@ const MapViewComponent = () => {
                     />
                 }
 
-                <BottomSheet bottomSheetModalRef={bottomSheetModalRef} userSelected={userSelected} selectedMarkerIndex={selectedMarkerIndex} isVisible={isModalVisible} setIsVisible={setIsModalVisible} />
+                <BottomSheet
+                    bottomSheetModalRef={bottomSheetModalRef}
+                    userSelected={userSelected}
+                    selectedMarkerIndex={selectedMarkerIndex}
+                    isVisible={isModalVisible}
+                    setIsVisible={setIsModalVisible}
+                />
 
 
             </View>

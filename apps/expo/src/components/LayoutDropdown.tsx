@@ -28,10 +28,13 @@ const LayoutDropdown = () => {
     const handleSignOut = async () => {
         handleOpenLoading()
         if (isLoaded) {
-            await signOut()
-                .catch((error) => {
-                    console.error(error)
-                })
+            console.log("closing session")
+            try {
+                await signOut()
+            } catch (error) {
+                console.error(error)
+            }
+            console.log("session closed")
         }
         handleCloseLoading()
     }
