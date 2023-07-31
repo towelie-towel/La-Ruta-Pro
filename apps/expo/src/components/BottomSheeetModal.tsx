@@ -1,14 +1,18 @@
-import React, { memo, useRef, useState } from 'react';
+import React, { memo, useState } from 'react';
 import {
     Image,
     Animated,
     Dimensions,
-    FlatList
+    FlatList,
+    LayoutAnimation,
+    ActivityIndicator
 } from "react-native";
+import {
+
+} from '@react-navigation/drawer';
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useAtom, } from 'jotai';
 import { useUser } from '@clerk/clerk-expo';
-import { useKeepAwake } from 'expo-keep-awake';
 import { useColorScheme } from 'nativewind';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
@@ -18,9 +22,10 @@ import { View, Text } from '../styles/Themed';
 import { PressBtn } from '../styles/PressBtn';
 import Colors from '../styles/Colors';
 
-// import { profileRoleAtom, profileStateAtom } from "../hooks/useMapConnection";
 import { userMarkersAtom } from './SelectMarkerIcon';
 import LayoutDropdown from './LayoutDropdown';
+import { signMethodAtom } from './Sign-up';
+import { Link } from 'expo-router';
 
 void Image.prefetch("https://lh3.googleusercontent.com/a/AAcHTtfPgVic8qF8hDw_WPE80JpGOkKASohxkUA8y272Ow=s1000-c")
 
@@ -82,7 +87,7 @@ const renderTabsScene = SceneMap({
     second: MarkersProfileTab,
 });
 
-const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, isVisible, setIsVisible }: {
+const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, setIsVisible }: {
     bottomSheetModalRef: React.RefObject<BottomSheetModalMethods>,
     selectedMarkerIndex: number | null,
     userSelected: boolean,
@@ -94,6 +99,8 @@ const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, i
     const { user, isLoaded, isSignedIn } = useUser()
     const { width } = Dimensions.get('window');
 
+    const [signMethod, setSignMethod] = useAtom(signMethodAtom);
+    const [sheetCurrentSnap, setSheetCurrentSnap] = useState(-1);
     const [tabsIndex, setTabsIndex] = useState(0);
     const [tabsRoutes] = useState([
         { key: 'first', title: 'First' },
@@ -104,6 +111,10 @@ const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, i
         <BottomSheetModal
             ref={bottomSheetModalRef}
             index={1}
+            onChange={(e) => {
+                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                setSheetCurrentSnap(e)
+            }}
             enableContentPanningGesture={false}
             snapPoints={snapPoints}
             backgroundStyle={{ borderRadius: 50, backgroundColor: colorScheme === 'light' ? 'rgba(203,213,225,0.8)' : 'rgba(26,18,11,0.5)' }}
@@ -123,11 +134,11 @@ const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, i
                             source={{
                                 uri: 'https://lh3.googleusercontent.com/a/AAcHTtfPgVic8qF8hDw_WPE80JpGOkKASohxkUA8y272Ow=s1000-c'
                             }}
-                            className={'w-full h-48'}
+                            className={'w-full h-48 min-[768px]:h-72'}
                             resizeMode="cover"
                         />
 
-                        <View className={'absolute left-5 top-40 border-2 border-solid border-white dark:border-black w-16 h-16 rounded-full overflow-hidden'}>
+                        <View className={'absolute left-5 top-40 min-[768px]:top-64 border-2 border-solid border-white dark:border-black w-16 h-16 rounded-full overflow-hidden'}>
                             <Animated.Image
                                 source={{
                                     uri: 'https://lh3.googleusercontent.com/a/AAcHTtfPgVic8qF8hDw_WPE80JpGOkKASohxkUA8y272Ow=s1000-c'
@@ -155,20 +166,20 @@ const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, i
                 )}
 
 
-                {(userSelected && isSignedIn && isLoaded) && (
+                {(userSelected && isSignedIn) && (
                     <View className='w-full h-full'>
 
                         <Animated.Image
                             source={{
                                 uri: 'https://lh3.googleusercontent.com/a/AAcHTtfPgVic8qF8hDw_WPE80JpGOkKASohxkUA8y272Ow=s1000-c'
                             }}
-                            className={'w-full h-48'}
+                            className={'w-full h-48 min-[768px]:h-72'}
                             resizeMode="cover"
                         />
 
                         <LayoutDropdown />
 
-                        <View className={'absolute left-5 top-40 border-2 border-solid border-white dark:border-black w-16 h-16 rounded-full overflow-hidden'}>
+                        <View className={'absolute left-5 top-40 min-[768px]:top-64 border-2 border-solid border-white dark:border-black w-16 h-16 rounded-full overflow-hidden'}>
                             <Animated.Image
                                 source={{
                                     uri: 'https://lh3.googleusercontent.com/a/AAcHTtfPgVic8qF8hDw_WPE80JpGOkKASohxkUA8y272Ow=s1000-c'
@@ -183,12 +194,12 @@ const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, i
                                 <View className='bg-transparent'>
                                     <Text className='font-bold text-lg'>{`${user.firstName} ${user.lastName}`}</Text>
                                 </View>
-                                <View>
+                                <View className='bg-transparent'>
                                     <Text className='font-medium text-sm text-slate-700 dark:text-slate-100'>@{`${user.username}`}</Text>
                                 </View>
                             </View>
                             <PressBtn onPress={() => { return }}>
-                                <View className='h-10 px-2 mt-3 mr-5 flex-row justify-center items-center rounded-2xl border-zinc-400 dark:border-zinc-800'>
+                                <View className='h-10 px-2 mt-3 mr-5 flex-row justify-center items-center rounded-2xl border-zinc-400 dark:border-zinc-800 border-[1.5px]'>
                                     <MaterialIcons
                                         name='edit'
                                         size={16}
@@ -203,6 +214,7 @@ const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, i
                             navigationState={{ index: tabsIndex, routes: tabsRoutes }}
                             renderScene={renderTabsScene}
                             onIndexChange={setTabsIndex}
+
                             initialLayout={{ width }}
                             renderTabBar={(props) => <TabBar style={{ backgroundColor: 'transparent' }} {...props} />}
                             lazy
@@ -210,6 +222,40 @@ const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, i
 
                     </View>
                 )}
+
+                {(!isSignedIn && selectedMarkerIndex === null) &&
+                    <View
+                        className='w-full bg-transparent justify-center items-center'
+                        style={{
+                            height: sheetCurrentSnap === 0 ? '30%' : sheetCurrentSnap === 1 ? '60%' : sheetCurrentSnap === 2 ? '90%' : 0,
+                        }}
+                    >
+                        {
+                            isLoaded
+                                ? <>
+                                    <MaterialCommunityIcons
+                                        name={'login'}
+                                        size={56}
+                                        color={Colors[colorScheme ?? 'light'].text}
+                                    />
+                                    <Text numberOfLines={2} className='w-64 text-center my-5 text-lg font-bold text-slate-700 dark:text-slate-100'>
+                                        Inicie sesión o seleccione un taxi para ver su información
+                                    </Text>
+                                    <Link href={'/auth/sign-in'} className={'h-12 max-[367px]:h-8 w-[200px] max-[367px]:w-[180px] bg-[#FCCB6F] dark:bg-white rounded-3xl justify-center items-center text-center'} >
+                                        <Text darkColor="black" className={'text-white dark:text-black font-bold text-lg max-[367px]:text-base'}>
+                                            {signMethod !== 'undefined' ? "Sign In" : "Sign Up"}
+                                        </Text>
+                                    </Link>
+                                </>
+                                :
+                                <ActivityIndicator
+                                    size={'large'}
+                                    animating
+                                    color={colorScheme === 'light' ? 'black' : 'white'}
+                                />
+                        }
+                    </View>
+                }
             </View>
         </BottomSheetModal>
     );
