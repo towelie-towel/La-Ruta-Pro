@@ -36,18 +36,6 @@ import { signMethodAtom } from "../components/Sign-up";
 import { profileRoleAtom, profileStateAtom } from "../hooks/useMapConnection";
 import usePressIn from '../hooks/usePressIn';
 
-void Image.prefetch("https://lh3.googleusercontent.com/a/AAcHTtfPgVic8qF8hDw_WPE80JpGOkKASohxkUA8y272Ow=s1000-c")
-
-const { width } = Dimensions.get("window");
-
-/* 
-    
-    wtf AIzaSyB-7B_Jh6ZXK9jWiY-VjXbvxhx-4QeXbJU
-
-    wtf AIzaSyBVW-J8k9X8Y0gL5CK2Lhwz-w7Q2K5Yjn4
-
-*/
-
 const isAdmin = true;
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
@@ -69,7 +57,12 @@ const Drawer = createDrawerNavigator<DrawerParamList>();
 
 export default function Home() {
 
+    const { width } = Dimensions.get("window");
     const isLargeScreen = width >= 768;
+    const isSmallScreen = width <= 400;
+    const drawerWidth = isLargeScreen
+        ? (width / 4)
+        : isSmallScreen ? 200 : (width / 2)
 
     const { user, isLoaded, isSignedIn } = useUser();
 
@@ -88,12 +81,11 @@ export default function Home() {
             screenOptions={{
 
                 drawerStyle: [{
-                    width: isLargeScreen ? (width / 4) : (width / 2),
-                    minWidth: 200,
+                    width: drawerWidth,
                     borderRightColor: colorScheme === 'dark' ? '#333333' : '#888888',
                     borderRightWidth: 1,
                 }],
-                drawerType: isLargeScreen ? 'permanent' : 'back',
+                drawerType: /* isLargeScreen ? 'permanent' :  */'back',
                 overlayColor: 'transparent',
                 header({ navigation }) {
                     return (
