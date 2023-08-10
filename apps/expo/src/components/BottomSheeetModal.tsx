@@ -34,7 +34,7 @@ const snapPoints = ["25%", "50%", "75%"];
 const FirstRoute = () => {
     return (
         (
-            <View style={{ flex: 1, backgroundColor: '#ff4081' }} />
+            <View style={{ flex: 1, backgroundColor: 'transparent' }} />
         )
     )
 }
@@ -52,7 +52,7 @@ const MarkersProfileTab = () => {
                     }}
                     data={userMarkers}
                     renderItem={({ item }) => (
-                        <View className='w-full h-14 flex-row items-center justify-evenly'>
+                        <View className='w-full h-14 flex-row items-center justify-evenly bg-transparent'>
                             <MaterialCommunityIcons
                                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                                 // @ts-ignore
@@ -83,8 +83,8 @@ const MarkersProfileTab = () => {
 }
 
 const renderTabsScene = SceneMap({
-    first: FirstRoute,
-    second: MarkersProfileTab,
+    profile: FirstRoute,
+    markers: MarkersProfileTab,
 });
 
 const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, setIsVisible }: {
@@ -103,8 +103,8 @@ const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, s
     const [sheetCurrentSnap, setSheetCurrentSnap] = useState(-1);
     const [tabsIndex, setTabsIndex] = useState(0);
     const [tabsRoutes] = useState([
-        { key: 'first', title: 'First' },
-        { key: 'second', title: 'Second' },
+        { key: 'profile', title: 'Perfil' },
+        { key: 'markers', title: 'Marcadores' },
     ]);
 
     return (
@@ -216,7 +216,17 @@ const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, s
                             onIndexChange={setTabsIndex}
 
                             initialLayout={{ width }}
-                            renderTabBar={(props) => <TabBar style={{ backgroundColor: 'transparent' }} {...props} />}
+                            renderTabBar={(props) =>
+                                <TabBar
+                                    activeColor='#FCCB6F'
+                                    inactiveColor={colorScheme === 'dark' ? 'white' : 'black'}
+                                    pressColor={colorScheme === 'dark' ? 'white' : 'black'}
+                                    style={{
+                                        backgroundColor: 'transparent',
+                                    }}
+                                    {...props}
+                                />
+                            }
                             lazy
                         />
 
@@ -235,13 +245,16 @@ const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, s
                                 ? <>
                                     <MaterialCommunityIcons
                                         name={'login'}
-                                        size={56}
+                                        size={(sheetCurrentSnap === 0 && (width < 768)) ? 42 : 56}
                                         color={Colors[colorScheme ?? 'light'].text}
                                     />
-                                    <Text numberOfLines={2} className='w-64 text-center my-5 text-lg font-bold text-slate-700 dark:text-slate-100'>
+                                    <Text numberOfLines={2} className='w-64 text-center my-4 max-[768px]:my-2 max-[367px]:my-1 text-lg max-[768px]:text-base max-[367px]:text-sm font-bold text-slate-700 dark:text-slate-100'>
                                         Inicie sesión o seleccione un taxi para ver su información
                                     </Text>
-                                    <Link href={'/auth/sign-in'} className={'h-12 max-[367px]:h-8 w-[200px] max-[367px]:w-[180px] bg-[#FCCB6F] dark:bg-white rounded-3xl justify-center items-center text-center'} >
+                                    <Link
+                                        href={'/auth/sign-in'}
+                                        className={'h-12 max-[367px]:h-8 max-[768px]:h-10 w-[200px] max-[367px]:w-[160px] max-[768px]:w-[180px] bg-[#FCCB6F] dark:bg-white rounded-3xl justify-center items-center text-center'}
+                                    >
                                         <Text darkColor="black" className={'text-white dark:text-black font-bold text-lg max-[367px]:text-base'}>
                                             {signMethod !== 'undefined' ? "Sign In" : "Sign Up"}
                                         </Text>

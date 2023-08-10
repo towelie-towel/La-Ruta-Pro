@@ -8,9 +8,10 @@ import {
 type PressBtnProps = {
     onPress?: () => void;
     callback?: () => void;
+    disabled?: boolean;
 } & Animated.AnimatedProps<ViewProps>;
 
-export const PressBtn: React.FC<PressBtnProps> = ({ onPress, style, children, callback, ...otherProps }) => {
+export const PressBtn: React.FC<PressBtnProps> = ({ onPress, style, children, callback, disabled = false, ...otherProps }) => {
 
     const animatedValue = useRef(new Animated.Value(1)).current;
 
@@ -32,13 +33,14 @@ export const PressBtn: React.FC<PressBtnProps> = ({ onPress, style, children, ca
 
     return (
 
-        <Pressable onPress={callback} onPressIn={handlePressIn} onPressOut={handlePressOut}>
+        <Pressable disabled={disabled} onPress={callback} onPressIn={handlePressIn} onPressOut={handlePressOut}>
             <Animated.View
                 {...otherProps}
                 style={[
                     style,
                     {
                         transform: [{ scale: animatedValue }],
+                        opacity: disabled ? 0.6 : 1
                     },
                 ]}
             >

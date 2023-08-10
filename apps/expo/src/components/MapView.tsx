@@ -5,7 +5,7 @@ import {
     Dimensions,
     LayoutAnimation,
 } from "react-native";
-import MapView, { /* type MapMarker, */ type Region, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { /* type MapMarker, */ type Region, PROVIDER_GOOGLE, MapWMSTile } from 'react-native-maps';
 import { type BottomSheetModal, BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { useAtom, } from 'jotai';
 import { useKeepAwake } from 'expo-keep-awake';
@@ -158,7 +158,7 @@ const MapViewComponent = () => {
     return (
         <BottomSheetModalProvider>
 
-            <View className={"bg-transparent w-full h-full"}>
+            <View className={"bg-transparent w-full h-full relative"}>
 
                 <MapView
                     onTouchMove={() => {
@@ -227,7 +227,11 @@ const MapViewComponent = () => {
                         />
                     }
 
+                    <MapWMSTile urlTemplate='' />
+
                 </MapView>
+
+                <View className='absolute h-4 top-0 left-0 w-2 bg-red' />
 
                 {
                     isAddingMarker &&

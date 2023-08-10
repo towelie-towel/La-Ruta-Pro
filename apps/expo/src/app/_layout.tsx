@@ -64,19 +64,21 @@ const RootLayout = () => {
           <Stack.Screen
             name="auth/sign-in"
             options={{
-              headerShown: true,
+              /* headerShown: true,
               headerTintColor: colorScheme === 'dark' ? 'white' : 'black',
               headerStyle: {
                 backgroundColor: colorScheme === 'dark' ? 'black' : 'white',
-              },
+              }, */
+              presentation: "transparentModal"
             }}
           />
           <Stack.Screen name="auth/sign-up" options={{
-            headerShown: true,
+            /* headerShown: true,
             headerTintColor: colorScheme === 'dark' ? 'white' : 'black',
             headerStyle: {
               backgroundColor: colorScheme === 'dark' ? 'black' : 'white',
-            },
+            }, */
+            presentation: "transparentModal"
           }} />
 
         </Stack>

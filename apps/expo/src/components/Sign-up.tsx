@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     LayoutAnimation,
     TextInput,
@@ -31,7 +31,7 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
     const { isSignedIn } = useAuth();
     const colorScheme = useColorScheme();
     const pathName = usePathname()
-    const { back, replace } = useRouter()
+    const { replace } = useRouter()
     const isOnSignUpRoute = pathName.includes("sign-up")
 
     const [isLoading, setIsLoading] = useState(false);
@@ -49,6 +49,8 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
     const [pendingVerification, setPendingVerification] = useState(false);
     const [isPhoneVerified, setIsPhoneVerified] = useState(false)
     const [phoneError, setPhoneError] = useState('');
+    const [codeTimer, setCodeTimer] = useState(60);
+    const codeTimerRef = useRef(60);
     const [code, setCode] = useState("");
     const [codeError, setCodeError] = useState('');
     const [isReduced, setIsReduced] = useState(false)
@@ -122,6 +124,26 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
         return true;
     }
 
+    const startTimer = () => {
+        setCodeTimer(() => 60);
+        codeTimerRef.current = 60;
+        console.log('Starting timer at: ' + codeTimerRef.current)
+
+        const timer = setInterval(() => {
+            if (codeTimerRef.current !== 0) {
+                setCodeTimer((prevCount) => {
+                    codeTimerRef.current = prevCount - 1
+                    return prevCount - 1
+                });
+                console.log(codeTimerRef.current)
+            } else {
+                console.log('clearing interval')
+                clearInterval(timer);
+            }
+        }, 1000);
+
+    };
+
     const handleSendCode = async () => {
         if (!isLoaded) {
             return;
@@ -140,11 +162,13 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
                 password: '3rWx7Hf8'
             })
             await signUp.preparePhoneNumberVerification({ strategy: "phone_code" });
+            console.log("code sended")
 
             LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
             setIsLoading(false);
             setPendingVerification(true);
 
+            startTimer()
         } catch (err) {
             console.error(JSON.stringify(err, null, 2));
             setIsLoading(false);
@@ -305,16 +329,24 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
             {pendingVerification && (
                 <>
                     <View className='w-4/5 max-[367px]:w-2/3 mb-4 max-[367px]:mb-2 justify-center items-center relative'>
-                        <View className='w-full justify-center flex-row items-center'>
-                            <Text numberOfLines={2}
-                                adjustsFontSizeToFit className='my-4 mr-4'>No Te Ha Llegado? Intenta de nuevo</Text>
-                            <PressBtn onPress={() => { handleSendCode() }}>
-                                <ActivityIndicator
-                                    size={'large'}
-                                    animating
-                                    color={colorScheme === 'light' ? 'black' : 'white'}
-                                />
-                            </PressBtn>
+                        <View className='w-full justify-center items-center'>
+                            <Text numberOfLines={1} adjustsFontSizeToFit className='mt-4' >
+                                No Te Ha Llegado?
+                            </Text>
+                            <View className='w-full justify-center items-center flex-row mb-4'>
+                                <Text numberOfLines={1} adjustsFontSizeToFit className='mr-2' >
+                                    Intenta de nuevo en {codeTimer}.
+                                </Text>
+                                <PressBtn
+                                    onPress={() => {
+                                        if (codeTimer === 0) {
+                                            handleSendCode()
+                                        }
+                                    }}
+                                >
+                                    <Text className='font-bold text-base'>Enviar</Text>
+                                </PressBtn>
+                            </View>
                         </View>
                         <TextInput
                             className={'h-12 max-[367px]:h-10 w-4/5 px-4 border rounded border-gray-300 dark:border-gray-800 dark:bg-transparent text-gray-500 dark:text-slate-500'}
@@ -338,7 +370,11 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
                             </View>
                         }
                     </View>
-                    <PressBtn onPress={() => { handleVerifyPhone() }} className={'w-[200px] max-[367px]:w-[180px] max-w-[280px] bg-[#FCCB6F] mb-2 dark:bg-white rounded-3xl h-12 max-[367px]:h-8 flex-row justify-center items-center'} >
+                    <PressBtn
+                        disabled={code === '' || isLoading}
+                        onPress={() => { handleVerifyPhone() }}
+                        className={'w-[200px] max-[367px]:w-[180px] max-w-[280px] bg-[#FCCB6F] mb-2 dark:bg-white rounded-3xl h-12 max-[367px]:h-8 flex-row justify-center items-center'}
+                    >
                         <Text darkColor="black" className={'text-white dark:text-black font-bold text-lg max-[367px]:text-base mr-3'}>Verificar</Text>
                         {isLoading && <ActivityIndicator
                             size={'small'}
