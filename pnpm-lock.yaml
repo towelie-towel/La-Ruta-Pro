@@ -44,6 +44,9 @@ importers:
       '@react-native-community/netinfo':
         specifier: 9.4.1
         version: 9.4.1(react-native@0.72.3)
+      '@react-native-firebase/app':
+        specifier: ^18.3.0
+        version: 18.3.0(expo@49.0.3)(react-native@0.72.3)(react@18.2.0)
       '@react-native-google-signin/google-signin':
         specifier: ^10.0.1
         version: 10.0.1(expo@49.0.3)(react-native@0.72.3)(react@18.2.0)
@@ -455,8 +458,8 @@ packages:
       '@jridgewell/gen-mapping': 0.3.3
       '@jridgewell/trace-mapping': 0.3.18
 
-  /@auth/core@0.0.0-manual.8fcd46b0:
-    resolution: {integrity: sha512-KuhvZ0hHz6NvMAgAi+su0dJOD0YAiOWGaLswyfGK5RsG/cdhqyyiII9HOTaZbWZAKir0UGYb8SlN+owhV30JXg==}
+  /@auth/core@0.0.0-manual.59d8da33:
+    resolution: {integrity: sha512-ZTaUedTobGEvQPhEeJLmnsdGbztG10T0rK8TA4wH87Eb8oBHInI//3zRngX6T9hEcZ+/OJnIANw0JrGDqUDREA==}
     peerDependencies:
       nodemailer: ^6.8.0
     peerDependenciesMeta:
@@ -493,7 +496,7 @@ packages:
       next: ^13.4.6
       react: ^18.2.0
     dependencies:
-      '@auth/core': 0.0.0-manual.8fcd46b0
+      '@auth/core': 0.0.0-manual.59d8da33
       next: 13.4.10(@babel/core@7.22.9)(react-dom@18.2.0)(react@18.2.0)
       react: 18.2.0
     transitivePeerDependencies:
@@ -3700,6 +3703,23 @@ packages:
       react-native: 0.72.3(@babel/core@7.22.9)(@babel/preset-env@7.22.9)(react@18.2.0)
     dev: false
 
+  /@react-native-firebase/app@18.3.0(expo@49.0.3)(react-native@0.72.3)(react@18.2.0):
+    resolution: {integrity: sha512-4sJf5mM551Y6E8D1hQufAU/PNEecJEaJbF4Me0JyclI2RXUHlTxJUpAsB/gxPY74LY99FaogFsDEB+3BuZ2B9w==}
+    peerDependencies:
+      expo: '>=47.0.0'
+      react: '*'
+      react-native: '*'
+    peerDependenciesMeta:
+      expo:
+        optional: true
+    dependencies:
+      expo: 49.0.3(@babel/core@7.22.9)
+      opencollective-postinstall: 2.0.3
+      react: 18.2.0
+      react-native: 0.72.3(@babel/core@7.22.9)(@babel/preset-env@7.22.9)(react@18.2.0)
+      superstruct: 0.6.2
+    dev: false
+
   /@react-native-google-signin/google-signin@10.0.1(expo@49.0.3)(react-native@0.72.3)(react@18.2.0):
     resolution: {integrity: sha512-oZoU2lfKyn0s0GqqdFsi4v2FSENrxQYQU9DD/RSkxDdkIQ49Wwo6p5LKlgXY04GwZEVdYMuvZN3G89gQW0ig2g==}
     peerDependencies:
@@ -5247,6 +5267,16 @@ packages:
       string-width: 4.2.3
       strip-ansi: 6.0.1
       wrap-ansi: 7.0.0
+    dev: false
+
+  /clone-deep@2.0.2:
+    resolution: {integrity: sha512-SZegPTKjCgpQH63E+eN6mVEEPdQBOUzjyJm5Pora4lrwWRFS8I0QAxV/KD6vV/i0WuijHZWQC1fMsPEdxfdVCQ==}
+    engines: {node: '>=0.10.0'}
+    dependencies:
+      for-own: 1.0.0
+      is-plain-object: 2.0.4
+      kind-of: 6.0.3
+      shallow-clone: 1.0.0
     dev: false
 
   /clone-deep@4.0.1:
@@ -6858,6 +6888,23 @@ packages:
       is-callable: 1.2.7
     dev: false
 
+  /for-in@0.1.8:
+    resolution: {integrity: sha512-F0to7vbBSHP8E3l6dCjxNOLuSFAACIxFy3UehTUlG7svlXi37HHsDkyVcHo0Pq8QwrE+pXvWSVX3ZT1T9wAZ9g==}
+    engines: {node: '>=0.10.0'}
+    dev: false
+
+  /for-in@1.0.2:
+    resolution: {integrity: sha512-7EwmXrOjyL+ChxMhmG5lnW9MPt1aIeZEwKhQzoBUdTV0N3zuwWDZYVJatDvZ2OyzPUvdIAZDsCetk3coyMfcnQ==}
+    engines: {node: '>=0.10.0'}
+    dev: false
+
+  /for-own@1.0.0:
+    resolution: {integrity: sha512-0OABksIGrxKK8K4kynWkQ7y1zounQxP+CWnyclVwj81KW3vlLlGUx57DKGcP/LH216GzqnstnPocF16Nxs0Ycg==}
+    engines: {node: '>=0.10.0'}
+    dependencies:
+      for-in: 1.0.2
+    dev: false
+
   /form-data@3.0.1:
     resolution: {integrity: sha512-RHkBKtLWUVwd7SqRIvCZMEvAMoGUp0XU+seQiZejj0COz3RI3hWP4sCv3gZWWLjJTd7rGwcsF5eKZGii0r/hbg==}
     engines: {node: '>= 6'}
@@ -7428,6 +7475,11 @@ packages:
     engines: {node: '>=8'}
     dev: false
 
+  /is-extendable@0.1.1:
+    resolution: {integrity: sha512-5BMULNob1vgFX6EjQw5izWDxrecWK9AM72rugNr0TFldMOi0fj6Jk+zeKIt0xGj4cEfQIJth4w3OKWOJ4f+AFw==}
+    engines: {node: '>=0.10.0'}
+    dev: false
+
   /is-extglob@1.0.0:
     resolution: {integrity: sha512-7Q+VbVafe6x2T+Tu6NcOf6sRklazEPmBoB3IWk3WdGZM2iGUwU/Oe3Wtq5lSEkDTTlpp8yx+5t4pzO/i9Ty1ww==}
     engines: {node: '>=0.10.0'}
@@ -7922,6 +7974,11 @@ packages:
     resolution: {integrity: sha512-9ykJ/46SN/9KPM/sichzQ7OvXyGDYKGTaDlKMGCAlg2UK8KRy4jb0d8sFc+0Tt0YYnThq8X2RZgCg74RPxgcVA==}
     dependencies:
       json-buffer: 3.0.0
+    dev: false
+
+  /kind-of@5.1.0:
+    resolution: {integrity: sha512-NGEErnH6F2vUuXDh+OlbcKW7/wOcfdRHaZ7VWtqCztfHri/++YKmP51OdWeGPuqCOba6kk2OTe5d02VmTB80Pw==}
+    engines: {node: '>=0.10.0'}
     dev: false
 
   /kind-of@6.0.3:
@@ -8673,6 +8730,14 @@ packages:
       yallist: 4.0.0
     dev: false
 
+  /mixin-object@2.0.1:
+    resolution: {integrity: sha512-ALGF1Jt9ouehcaXaHhn6t1yGWRqGaHkPFndtFVHfZXOvkIZ/yoGaSi0AHVTafb3ZBGg4dr/bDwnaEKqCXzchMA==}
+    engines: {node: '>=0.10.0'}
+    dependencies:
+      for-in: 0.1.8
+      is-extendable: 0.1.1
+    dev: false
+
   /mkdirp@0.5.6:
     resolution: {integrity: sha512-FP+p8RB8OWpF3YZBCrP5gtADmtXApB5AMLn+vdyA+PyxCjrCs00mjyUozssO33cwDeT3wNGdLxJ5M//YqtHAJw==}
     dependencies:
@@ -8777,7 +8842,7 @@ packages:
       nodemailer:
         optional: true
     dependencies:
-      '@auth/core': 0.0.0-manual.8fcd46b0
+      '@auth/core': 0.0.0-manual.59d8da33
       '@auth/nextjs': 0.0.0-manual.179c08d4(next@13.4.10)(react@18.2.0)
       next: 13.4.10(@babel/core@7.22.9)(react-dom@18.2.0)(react@18.2.0)
       react: 18.2.0
@@ -9078,6 +9143,11 @@ packages:
       define-lazy-prop: 2.0.0
       is-docker: 2.2.1
       is-wsl: 2.2.0
+    dev: false
+
+  /opencollective-postinstall@2.0.3:
+    resolution: {integrity: sha512-8AV/sCtuzUeTo8gQK5qDZzARrulB3egtLzFgteqB2tcT4Mw7B8Kt7JcDHmltjz6FOAHsvTevk70gZEbhM4ZS9Q==}
+    hasBin: true
     dev: false
 
   /optionator@0.9.3:
@@ -10418,6 +10488,15 @@ packages:
     resolution: {integrity: sha512-E5LDX7Wrp85Kil5bhZv46j8jOeboKq5JMmYM3gVGdGH8xFpPWXUMsNrlODCrkoxMEeNi/XZIwuRvY4XNwYMJpw==}
     dev: false
 
+  /shallow-clone@1.0.0:
+    resolution: {integrity: sha512-oeXreoKR/SyNJtRJMAKPDSvd28OqEwG4eR/xc856cRGBII7gX9lvAqDxusPm0846z/w/hWYjI1NpKwJ00NHzRA==}
+    engines: {node: '>=0.10.0'}
+    dependencies:
+      is-extendable: 0.1.1
+      kind-of: 5.1.0
+      mixin-object: 2.0.1
+    dev: false
+
   /shallow-clone@3.0.1:
     resolution: {integrity: sha512-/6KqX+GVUdqPuPPd2LxDDxzX6CAbjJehAAOKlNpqqUpAqPM6HeL8f+o3a+JsyGjn2lv0WY8UsTgUJjU9Ok55NA==}
     engines: {node: '>=8'}
@@ -10780,6 +10859,13 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       copy-anything: 3.0.4
+    dev: false
+
+  /superstruct@0.6.2:
+    resolution: {integrity: sha512-lvA97MFAJng3rfjcafT/zGTSWm6Tbpk++DP6It4Qg7oNaeM+2tdJMuVgGje21/bIpBEs6iQql1PJH6dKTjl4Ig==}
+    dependencies:
+      clone-deep: 2.0.2
+      kind-of: 6.0.3
     dev: false
 
   /supports-color@5.5.0:
