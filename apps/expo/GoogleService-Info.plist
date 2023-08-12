@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>716031849299-475thjrk81fpcnsfsthfl4qe7jschji1.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.716031849299-475thjrk81fpcnsfsthfl4qe7jschji1</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>716031849299-6d548ftcrm7qbqarrrfasmqhfmjdhgl9.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyCXeNr0KvoImupGgt8HtiudtnHR9Aa_C-4</string>
+	<key>GCM_SENDER_ID</key>
+	<string>716031849299</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.cubastore.laruta</string>
+	<key>PROJECT_ID</key>
+	<string>la-ruta-390915</string>
+	<key>STORAGE_BUCKET</key>
+	<string>la-ruta-390915.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:716031849299:ios:9086770811781153f227a6</string>
+</dict>
+</plist>

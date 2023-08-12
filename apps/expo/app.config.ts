@@ -18,12 +18,14 @@ const defineConfig = (): ExpoConfig => ({
   assetBundlePatterns: ["**/*"],
   ios: {
     supportsTablet: true,
+    googleServicesFile: "./GoogleService-Info.plist",
     bundleIdentifier: "com.cubastore.laruta",
     entitlements: {
       "com.apple.developer.networking.wifi-info": true // https://docs.expo.dev/versions/latest/sdk/netinfo/
     },
   },
   android: {
+    googleServicesFile: "./google-services.json",
     adaptiveIcon: {
       foregroundImage: "./assets/adaptive-icon.png",
       backgroundColor: "#FCCB6F",
@@ -47,7 +49,13 @@ const defineConfig = (): ExpoConfig => ({
   experiments: {
     tsconfigPaths: true,
   },
-  plugins: ["./expo-plugins/with-modify-gradle.js"],
+  plugins: [
+    "./expo-plugins/with-modify-gradle.js",
+    "@react-native-google-signin/google-signin",
+    "@react-native-firebase/app",
+    "@react-native-firebase/perf",
+    "@react-native-firebase/crashlytics"
+  ],
 });
 
 /* 

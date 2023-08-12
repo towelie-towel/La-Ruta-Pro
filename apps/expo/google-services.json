@@ -1,0 +1,47 @@
+{
+    "project_info": {
+        "project_number": "716031849299",
+        "project_id": "la-ruta-390915",
+        "storage_bucket": "la-ruta-390915.appspot.com"
+    },
+    "client": [
+        {
+            "client_info": {
+                "mobilesdk_app_id": "1:716031849299:android:976b85ebb91f7e41f227a6",
+                "android_client_info": {
+                    "package_name": "com.cubastore.laruta"
+                }
+            },
+            "oauth_client": [
+                {
+                    "client_id": "716031849299-6d548ftcrm7qbqarrrfasmqhfmjdhgl9.apps.googleusercontent.com",
+                    "client_type": 1,
+                    "android_info": {
+                        "package_name": "com.cubastore.laruta",
+                        "certificate_hash": "ca0ea898f0150800f7d1dfc8c624ea0ebf1df78a"
+                    }
+                },
+                {
+                    "client_id": "716031849299-2p020j36avob1khm0dqk4ihuiiorenfd.apps.googleusercontent.com",
+                    "client_type": 3
+                }
+            ],
+            "api_key": [
+                {
+                    "current_key": "AIzaSyAMdWFDVK8iZeXgRDlEZBUXxjduWtd2iZA"
+                }
+            ],
+            "services": {
+                "appinvite_service": {
+                    "other_platform_oauth_client": [
+                        {
+                            "client_id": "716031849299-2p020j36avob1khm0dqk4ihuiiorenfd.apps.googleusercontent.com",
+                            "client_type": 3
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "configuration_version": "1"
+}
