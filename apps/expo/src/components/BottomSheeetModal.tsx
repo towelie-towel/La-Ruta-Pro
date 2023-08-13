@@ -8,7 +8,6 @@ import {
     ActivityIndicator
 } from "react-native";
 import {
-
 } from '@react-navigation/drawer';
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useAtom, } from 'jotai';

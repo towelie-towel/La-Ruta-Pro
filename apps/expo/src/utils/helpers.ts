@@ -4,7 +4,7 @@ export const getDirections = async (startLoc: string, destinationLoc: string) =>
             `https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destinationLoc}&key=${process.env.EXPO_PUBLIC_GOOGLE_MAPS_APIKEY || ""}`
         );
         const respJson = await resp.json();
-        const decodedCoords = polylineDecode(respJson.routes[0].overview_polyline.points).map((point, index) => ({ latitude: point[0] as number, longitude: point[1] as number }));
+        const decodedCoords = polylineDecode(respJson.routes[0].overview_polyline.points).map((point, index) => ({ latitude: point[0]!, longitude: point[1]! }));
         return decodedCoords;
     } catch (error) {
         console.error(error);
@@ -77,4 +77,9 @@ export function polylineDecode(str: string, precision?: number) {
     }
 
     return coordinates;
+};
+
+export const stringToBuffer = (str: string): ArrayBuffer => {
+    const encoder = new TextEncoder();
+    return encoder.encode(str).buffer;
 };

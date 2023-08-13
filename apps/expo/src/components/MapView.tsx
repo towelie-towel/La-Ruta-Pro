@@ -1,23 +1,24 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
     Animated,
     StatusBar,
     Dimensions,
     LayoutAnimation,
 } from "react-native";
-import MapView, { /* type MapMarker, */ type Region, PROVIDER_GOOGLE, MapWMSTile } from 'react-native-maps';
+import MapView, { /* type MapMarker,  type Region,*/ PROVIDER_GOOGLE } from 'react-native-maps';
 import { type BottomSheetModal, BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { useAtom, } from 'jotai';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useColorScheme } from 'nativewind';
+import NetInfo from '@react-native-community/netinfo';
 
 import useMapConnection from '../hooks/useMapConnection';
-import { type MarkerData } from '../constants/Markers';
+// import { type MarkerData } from '../constants/Markers';
 
 import { View } from '../styles/Themed';
 import { NightMap } from '../styles/NightMap';
 import UserMarker from '../markers/UserMarker';
-import CarMarker from '../markers/CarMarker';
+// import CarMarker from '../markers/CarMarker';
 
 import { type UserMarkerIconType, userMarkersAtom } from './SelectMarkerIcon';
 import UserMarkerIcon from './UserMarkerIcon';
@@ -31,8 +32,10 @@ const MapViewComponent = () => {
     useKeepAwake();
     const { colorScheme } = useColorScheme();
     const { width, height } = Dimensions.get('window');
+    const { isConnected, isInternetReachable } = NetInfo.useNetInfo();
 
-    const { markers, location, heading } = useMapConnection();
+    // const { markers, location, heading } = useMapConnection();
+    const { resetConnection, reseTracking } = useMapConnection();
 
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isMenuVisible, setIsMenuVisible] = useState(true)
@@ -49,7 +52,7 @@ const MapViewComponent = () => {
     const bottomSheetModalRef = useRef<BottomSheetModal>(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
 
-    useEffect(() => {
+    /* useEffect(() => {
         if (selectedMarkerIndex !== null && mapViewRef.current) {
             const selectedMarker = markers[selectedMarkerIndex];
             if (selectedMarker) {
@@ -62,18 +65,18 @@ const MapViewComponent = () => {
             }
         }
 
-    }, [markers, selectedMarkerIndex]);
+    }, [markers, selectedMarkerIndex]); */
 
-    const animateToRegion = useCallback((region: Region) => {
+    /* const animateToRegion = useCallback((region: Region) => {
         mapViewRef.current && mapViewRef.current.animateToRegion(region)
-    }, [])
+    }, []) */
 
-    const handlePresentModal = useCallback(() => {
+    /* const handlePresentModal = useCallback(() => {
         bottomSheetModalRef.current?.present();
         setIsModalVisible(true);
-    }, [])
+    }, []) */
 
-    const handleMarkerPress = useCallback((index: number) => {
+    /* const handleMarkerPress = useCallback((index: number) => {
         setUserSelected(false);
         setSelectedMarkerIndex(index);
 
@@ -89,7 +92,7 @@ const MapViewComponent = () => {
                 latitudeDelta: 0.0033333,
             });
         }
-    }, [animateToRegion, handlePresentModal, markers]);
+    }, [animateToRegion, handlePresentModal, markers]); */
 
     const toggleNavMenu = useCallback(() => {
         const toValue = isMenuOpen ? 0 : 1
@@ -153,7 +156,11 @@ const MapViewComponent = () => {
         }
     }, [isMenuOpen, toggleNavMenu])
 
-    const taxiBtnHandler = useCallback(() => { console.log("grab a taxi") }, [])
+    const taxiBtnHandler = useCallback(async () => {
+        console.log({ isConnected, isInternetReachable })
+        await resetConnection()
+        reseTracking()
+    }, [isConnected, isInternetReachable])
 
     return (
         <BottomSheetModalProvider>
@@ -179,8 +186,8 @@ const MapViewComponent = () => {
                         latitudeDelta: 0.0322,
                         longitudeDelta: 0.0221,
                     }}
-                    showsMyLocationButton
-                    showsUserLocation
+                    /* showsMyLocationButton
+                    showsUserLocation */
                     showsCompass={false}
                     toolbarEnabled={false}
                     ref={mapViewRef}
@@ -188,46 +195,46 @@ const MapViewComponent = () => {
                     customMapStyle={colorScheme === 'dark' ? NightMap : undefined}
                 >
 
-                    {markers.map((marker: MarkerData, index: number) => {
+                    {/* {markers.map((marker: MarkerData, index: number) => {
                         return (
-                            <CarMarker
-                                key={index}
-                                onPress={() => handleMarkerPress(index)}
-                                coordinate={marker.coordinate}
-                                description=''
-                                title=''
-                                imageURL=''
-                            />
-                        );
-                    })}
+                                <React.Fragment
+                                    key={index}
+                                >
+
+                                    <CarMarker
+                                        onPress={() => handleMarkerPress(index)}
+                                        coordinate={marker.coordinate}
+                                        description=''
+                                        title=''
+                                        imageURL=''
+                                    />
+                                </React.Fragment>
+                        )
+                    })} */}
 
                     {
                         userMarkers.map((userMarker, index) => {
                             return (
-                                <UserMarkerIcon
-                                    {...userMarker}
+                                <React.Fragment
                                     key={index}
-                                    colorScheme={colorScheme}
-                                />
+                                >
+                                    <UserMarkerIcon
+                                        {...userMarker}
+                                        colorScheme={colorScheme}
+                                    />
+                                </React.Fragment>
                             )
                         })
                     }
 
                     <AnimatedRouteMarker />
 
-                    {
-                        location &&
-                        <UserMarker
-                            onPress={openUserProfileHandler}
-                            coordinate={location.coords}
-                            description=''
-                            title=''
-                            userId=''
-                            heading={heading}
-                        />
-                    }
-
-                    <MapWMSTile urlTemplate='' />
+                    <UserMarker
+                        onPress={openUserProfileHandler}
+                        description=''
+                        title=''
+                        userId=''
+                    />
 
                 </MapView>
 

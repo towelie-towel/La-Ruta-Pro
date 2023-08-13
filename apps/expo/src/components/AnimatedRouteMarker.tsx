@@ -1,10 +1,15 @@
 import { useState, useRef, useCallback, useEffect, memo } from 'react'
 import { type LatLng } from 'react-native-maps';
+import { MaterialIcons } from '@expo/vector-icons';
+import { useColorScheme } from 'nativewind';
 
 import { getDirections } from '../utils/helpers';
 import AnimatedMarker from './AnimatedMarker';
+import Colors from '~/styles/Colors';
 
 const AnimatedRouteMarker = () => {
+
+    const { colorScheme } = useColorScheme();
 
     const anim_route_ref = useRef<LatLng[]>([])
     const route_count_ref = useRef(0);
@@ -37,7 +42,7 @@ const AnimatedRouteMarker = () => {
 
         void (async () => {
             const new_direction = await getDirections("23.1218644,-82.32806211", "23.1118644,-82.31806211")
-            anim_route_ref.current = new_direction === undefined ? [] : new_direction
+            anim_route_ref.current = new_direction ?? []
         }
         )()
 
@@ -56,7 +61,14 @@ const AnimatedRouteMarker = () => {
             {
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 // @ts-ignore
-                anim_route_ref.current.length > 0 && <AnimatedMarker latitude={current_coords.latitude} longitude={current_coords.longitude} />
+                anim_route_ref.current.length > 0 && <AnimatedMarker latitude={current_coords.latitude} longitude={current_coords.longitude} heading={0} >
+
+                    <MaterialIcons
+                        name="location-on"
+                        size={24}
+                        color={Colors[colorScheme ?? 'light'].text}
+                    />
+                </AnimatedMarker>
             }
         </>
     )

@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useRef, useCallback } from 'react'
-import * as Location from 'expo-location';
+import * as ExpoLocation from 'expo-location';
 import { useUser } from '@clerk/clerk-expo';
 import { useAtom, atom } from 'jotai'
 import { atomWithStorage, createJSONStorage } from 'jotai/utils'
@@ -8,14 +8,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import NetInfo from '@react-native-community/netinfo';
 
 import { type MarkerData, initialMarkers } from '../constants/Markers';
+import { stringToBuffer } from '~/utils/helpers';
 
 export const markersAtom = atom<MarkerData[]>(initialMarkers)
 
-const storedHistoryLocation = createJSONStorage<Location.LocationObject[] | undefined>(() => AsyncStorage)
-const historyLocationAtom = atomWithStorage<Location.LocationObject[] | undefined>('historyLocation', undefined, storedHistoryLocation)
+const storedPositionHistory = createJSONStorage<ExpoLocation.LocationObject[] | undefined>(() => AsyncStorage)
+const positionHistoryAtom = atomWithStorage<ExpoLocation.LocationObject[] | undefined>('historyPosition', undefined, storedPositionHistory)
 
-const locationAtom = atom<Location.LocationObject | undefined>(undefined);
-const headingAtom = atom<Location.LocationHeadingObject>({
+export const positionAtom = atom<ExpoLocation.LocationObject | undefined>(undefined);
+export const headingAtom = atom<ExpoLocation.LocationHeadingObject>({
     trueHeading: 0,
     magHeading: 0,
     accuracy: 0,
@@ -27,26 +28,28 @@ export const profileRoleAtom = atomWithStorage<'taxi' | 'client'>('userRole', "c
 const storedProfileState = createJSONStorage<'active' | 'streaming' | 'inactive'>(() => AsyncStorage)
 export const profileStateAtom = atomWithStorage<'active' | 'streaming' | 'inactive'>('profileState', "inactive", storedProfileState)
 
+// const storedIsRecievingTaxis = createJSONStorage<boolean>(() => AsyncStorage)
+// export const isRecievingTaxisAtom = atomWithStorage<boolean>('isRecievingTaxis', false, storedIsRecievingTaxis)
+
 const storedStreamingTo = createJSONStorage<string | null>(() => AsyncStorage)
 export const streamingToAtom = atomWithStorage<string | null>('streamingTo', null, storedStreamingTo)
 
-const IS_WEB_SOCKET_CONNECTION = false
-
 const useMapConnection = () => {
     const [markers, setMarkers] = useAtom(markersAtom);
-    const [historyLocation, setHistoryLocation] = useAtom(historyLocationAtom);
+    const [positionHistory, setPositionHistory] = useAtom(positionHistoryAtom);
 
     const [heading, setHeading] = useAtom(headingAtom);
 
-    const [location, setLocation] = useAtom(locationAtom);
-    const locationRef = useRef(location);
-    locationRef.current = location;
+    const [position, setPosition] = useAtom(positionAtom);
+    const positionRef = useRef(position);
+    positionRef.current = position;
 
     const [profileRole, _setProfileRole] = useAtom(profileRoleAtom)
     const profileRoleRef = useRef(profileRole);
     profileRoleRef.current = profileRole;
 
-    const [profileState, _setProfileState] = useAtom(profileStateAtom)
+    const [profileState, setProfileState] = useAtom(profileStateAtom)
+    //const [isRecievingTaxis, setIsRecievingTaxis] = useAtom(isRecievingTaxisAtom)
     const profileStateRef = useRef(profileState);
     profileStateRef.current = profileState;
 
@@ -55,37 +58,73 @@ const useMapConnection = () => {
     streamingToRef.current = streamingTo;
 
     const ws = useRef<WebSocket | null>(null);
+    const positionSubscrition = useRef<ExpoLocation.LocationSubscription | null>()
+    const positionStreaming = useRef<NodeJS.Timer | null>()
 
     const { isConnected, isInternetReachable } = NetInfo.useNetInfo();
     const { user, isLoaded, isSignedIn } = useUser();
 
-    const sendMessageToServer = (message: string) => {
+    const resetConnection = async () => {
         try {
+
             if (!isConnected || !isInternetReachable) {
-                console.error("No internet connection");
-                return;
+                throw new Error("No internet connection");
             }
 
-            if (ws.current?.readyState === WebSocket.CONNECTING) {
-                setTimeout(() => {
-                    sendMessageToServer(message)
-                }, 3000);
-                return;
+            if (!ws.current || ws.current.readyState === WebSocket.CLOSED) {
+                ws.current = await asyncNewWebSocket()
+            } else {
+                console.log("a web socket is already stored", JSON.stringify(ws.current, null, 2))
             }
 
-            if (ws.current?.readyState === WebSocket.CLOSING) {
-                console.log("WebSocket is closing");
-                return;
-            }
+        } catch (error) {
+            console.error(error)
+        }
+    }
 
-            if (ws.current?.readyState === WebSocket.CLOSED) {
-                console.log("WebSocket is closed");
-                return;
-            }
+    const reseTracking = () => {
+        if (!isConnected || !isInternetReachable) {
+            throw new Error("No internet connection");
+        }
+
+        if (!positionSubscrition.current) {
+            trackPosition().then((suscription) => {
+                positionSubscrition.current = suscription
+            }).catch((error) => {
+                console.log(error)
+            })
+        }
+    }
+
+    // i dont like this
+    const throwSocketError = () => {
+        if (!isConnected || !isInternetReachable) {
+            throw new Error("No internet connection");
+        }
+
+        if (ws.current?.readyState === WebSocket.CONNECTING) {
+            throw new Error("WS is connecting");
+        }
+
+        if (ws.current?.readyState === WebSocket.CLOSING) {
+            throw new Error("WS is closing");
+        }
+
+        if (ws.current?.readyState === WebSocket.CLOSED) {
+            throw new Error("WS is closed");
+        }
+    }
+
+    const sendStringToServer = (message: string) => {
+        const messageBuffer = stringToBuffer(message)
+        try {
 
             if (ws.current?.readyState === WebSocket.OPEN) {
-                ws.current?.send(message);
+                ws.current?.send(messageBuffer);
                 return;
+            } else {
+                // Why would i do this
+                throwSocketError()
             }
 
         } catch (error) {
@@ -94,190 +133,141 @@ const useMapConnection = () => {
     }
 
     const getLocation = () => {
-        return Location.getCurrentPositionAsync({});
+        return ExpoLocation.getCurrentPositionAsync({});
     }
 
     const getHeading = () => {
-        return Location.getHeadingAsync();
+        return ExpoLocation.getHeadingAsync();
     }
 
     const handleWebSocketMessage = useCallback((event: MessageEvent<string>) => {
-
         // event.data.startsWith("markers-") ? void setMarkers(JSON.parse(event.data.replace("markers-", ""))) : null;
-
         console.log(event.data)
-
         // event.data.startsWith("taxisActives-") ? void setMarkers(JSON.parse(event.data.replace("markers-", ""))) : null;
-
     }, []);
 
+    const asyncNewWebSocket = async () => {
+        let protocol = (await AsyncStorage.getItem('userRole'))?.includes("client") ? 'map-client' : 'map-taxi';
+        if (isSignedIn) protocol += "-" + user.id
+
+        console.log("establishing web socket connection")
+        const suckItToMeBBy = new WebSocket(`ws://192.168.1.103:8658/subscribe`, protocol);
+
+        suckItToMeBBy.addEventListener("open", (event) => {
+            console.log('%c Connection opened', 'background: orange; color: black;', event);
+            void setProfileState("streaming")
+        });
+
+        suckItToMeBBy.addEventListener('close', (event) => {
+            void setProfileState("inactive")
+            positionStreaming.current && clearInterval(positionStreaming.current)
+            console.log('%c Connection closed', 'background: orange; color: black;', event);
+            console.log("a web socket is already stored", JSON.stringify(ws.current, null, 2))
+        });
+
+        suckItToMeBBy.addEventListener('error', (error) => {
+            void setProfileState("inactive")
+            positionStreaming.current && clearInterval(positionStreaming.current)
+            console.log('%c WebSocket error', 'background: red; color: black;', error);
+        });
+
+        suckItToMeBBy.addEventListener('message', handleWebSocketMessage);
+
+        return suckItToMeBBy;
+    }
+
+    const trackPosition = async () => {
+        const { granted } = await ExpoLocation.getForegroundPermissionsAsync()
+
+        if (!granted) {
+            console.error('Permission to access location was denied');
+            return;
+        }
+
+        await ExpoLocation.enableNetworkProviderAsync()
+
+        const positionSubscrition = await ExpoLocation.watchPositionAsync(
+            {
+                accuracy: ExpoLocation.Accuracy.BestForNavigation,
+                timeInterval: 2000,
+            },
+            (newPosition) => {
+                try {
+                    if (profileState === "streaming") {
+                        console.log("streaming")
+                        const stringMessage = `${newPosition.coords.latitude},${newPosition.coords.longitude}`
+                        sendStringToServer(stringMessage)
+                    }
+                    getHeading()
+                        .then((heading) => {
+                            setHeading(heading);
+                            setPosition({ ...newPosition, coords: { ...newPosition.coords, heading: heading.trueHeading } })
+                            void setPositionHistory(async (oldPositionHistory) => [...((await oldPositionHistory) ?? []), newPosition])
+                        })
+                        .catch((error) => {
+                            console.log(error)
+                        })
+
+                } catch (error) {
+                    console.error(error)
+                }
+            },
+
+        )
+        return positionSubscrition
+    }
+
+    const initWebSocket = async () => {
+        if (!ws.current) {
+            ws.current = await asyncNewWebSocket()
+        } else {
+            console.log("a web socket is already stored")
+        }
+    }
+
     useEffect(() => {
-
-        const asyncWebSocket = async () => {
-            if (!isConnected || !isInternetReachable) {
-                console.error("No internet connection");
-                return;
+        console.log("useEffect-useMapConnection")
+        if (
+            isConnected
+            && isInternetReachable
+        ) {
+            if (ws.current?.readyState === ws.current?.CLOSED) {
+                void initWebSocket()
             }
 
-            let protocol = (await AsyncStorage.getItem('userRole'))?.includes("client") ? 'map-client' : 'map-worker';
-            if (isSignedIn) protocol += "-" + user.id
-
-            ws.current = new WebSocket("ws://192.168.135.191:3333", protocol);
-
-            ws.current.addEventListener("open", (event) => {
-                console.log('%c Connection opened', 'background: orange; color: black;', event);
-            });
-
-            ws.current.addEventListener('message', handleWebSocketMessage);
-
-            ws.current.addEventListener('close', (event) => {
-                console.log('%c Connection closed', 'background: orange; color: black;', event);
-            });
-
-            ws.current.addEventListener('error', (error) => {
-                console.log('%c WebSocket error', 'background: red; color: black;', error);
-            });
-
-        }
-
-        if (IS_WEB_SOCKET_CONNECTION)
-            void asyncWebSocket()
-
-        let PositionSubscrition: Location.LocationSubscription | undefined = undefined;
-
-        const trackPosition = async () => {
-            const { status } = await Location.getForegroundPermissionsAsync()
-            await Location.enableNetworkProviderAsync()
-
-            if (status.includes('granted')) {
-                console.error('Permission to access location was denied');
-                return;
-            }
-
-            PositionSubscrition = await Location.watchPositionAsync(
-                {
-                    accuracy: Location.Accuracy.BestForNavigation,
-                    timeInterval: 3000,
-                },
-                (newLocation) => {
-                    try {
-                        void setHistoryLocation(async (oldHistoryLocation) => [...((await oldHistoryLocation) ?? []), newLocation])
-
-                        getHeading()
-                            .then((heading) => {
-                                setHeading(heading);
-                                setLocation({ ...newLocation, coords: { ...newLocation.coords, heading: heading.trueHeading } })
-                            })
-                            .catch((error) => {
-                                console.log(error)
-                            })
-
-                    } catch (error) {
-                        console.error(error)
-                    }
-                },
-
-            )
-
-            const firstLocation = await getLocation()
-            await setHistoryLocation([...(historyLocation || []), firstLocation])
-            setLocation(firstLocation);
-
-        }
-
-        if (IS_WEB_SOCKET_CONNECTION)
-            void trackPosition()
-
-        let positionStreaming: NodeJS.Timer;
-
-        const streamPosition = () => {
-
-
-            if (isSignedIn && isLoaded) {
-
-                if (profileState === 'active' && profileRole === 'taxi') {
-
-                    positionStreaming = setInterval(() => {
-
-                        sendMessageToServer(`taxiDriver-` + JSON.stringify({
-                            ...locationRef.current, coords: {
-                                heading: heading.trueHeading,
-                                ...locationRef.current?.coords
-                            },
-                            userId: user.id,
-                            profileRole: profileRoleRef.current,
-                            isConnected: isConnected,
-                        }))
-
-                    }, 3000)
-
-                } else if (profileState === 'streaming') {
-
-                    if (profileRole === 'client') {
-
-                        positionStreaming = setInterval(() => {
-
-                            sendMessageToServer(`clientTo-` + JSON.stringify({
-                                ...locationRef.current, coords: {
-                                    heading: heading.trueHeading,
-                                    ...locationRef.current?.coords
-                                },
-                                userId: user.id,
-                                profileRole: profileRoleRef.current,
-                                isConnected: isConnected,
-                                streamingTo: streamingToRef,
-                            }))
-
-                        }, 3000)
-
-                    } else if (profileRole === 'taxi') {
-
-                        positionStreaming = setInterval(() => {
-
-                            sendMessageToServer(`taxiDriverTo-` + JSON.stringify({
-                                ...locationRef.current, coords: {
-                                    heading: heading.trueHeading,
-                                    ...locationRef.current?.coords
-                                },
-                                userId: user.id,
-                                profileRole: profileRoleRef.current,
-                                isConnected: isConnected,
-                            }))
-
-                        }, 3000)
-
-                    }
-
-                }
-
-
-            }
-
-        }
-        if (IS_WEB_SOCKET_CONNECTION)
-            void streamPosition
-
-        return () => {
-            if (IS_WEB_SOCKET_CONNECTION) {
-                positionStreaming && clearInterval(positionStreaming)
-                if (ws.current?.readyState === WebSocket.OPEN) {
-                    ws.current?.close();
-                    ws.current?.removeEventListener("message", handleWebSocketMessage);
-                }
-                PositionSubscrition && PositionSubscrition.remove()
+            if (!positionSubscrition.current) {
+                trackPosition().then((suscription) => {
+                    positionSubscrition.current = suscription
+                }).catch((error) => {
+                    console.log(error)
+                })
             }
         };
-    }, [isSignedIn, isConnected, profileRole, profileState]);
+        return () => {
+            console.log("useEffect-useMapConnection-return")
+            if (positionStreaming.current) {
+                clearInterval(positionStreaming.current)
+                positionStreaming.current = null
+            }
+            if (positionSubscrition.current) {
+                positionSubscrition.current.remove()
+                positionSubscrition.current = null
+            }
+
+        }
+    }, [isConnected]);
 
     return {
         markers,
         setMarkers,
         ws,
-        sendMessageToServer,
+        sendStringToServer,
         location,
         heading,
         handleWebSocketMessage,
-        historyLocation,
+        positionHistory,
+        resetConnection,
+        reseTracking
     }
 }
 

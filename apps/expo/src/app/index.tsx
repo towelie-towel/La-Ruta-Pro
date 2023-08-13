@@ -34,7 +34,7 @@ import AdminScreen from "../components/Admin";
 import { signMethodAtom } from "../components/Sign-up";
 
 import { profileRoleAtom, profileStateAtom } from "../hooks/useMapConnection";
-import usePressIn from '../hooks/usePressIn';
+import usePressIn from '../animations/usePressIn';
 
 const isAdmin = true;
 

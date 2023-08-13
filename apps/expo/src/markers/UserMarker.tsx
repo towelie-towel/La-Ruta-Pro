@@ -1,90 +1,45 @@
-import React, { memo, useEffect, useRef } from 'react'
-import { Animated } from 'react-native'
-import { type LocationHeadingObject } from 'expo-location'
-import { Circle, type MapMarkerProps, MarkerAnimated } from 'react-native-maps'
+import React, { memo } from 'react'
+import { Circle, type MapMarkerProps } from 'react-native-maps'
+import { useAtom } from 'jotai'
+import { MaterialIcons } from '@expo/vector-icons';
+import { useColorScheme } from 'nativewind'
 
-import { View } from '../styles/Themed'
-import { type MarkerData } from '../constants/Markers'
+import { positionAtom, headingAtom } from '~/hooks/useMapConnection'
+import AnimatedMarker from '~/components/AnimatedMarker'
+import Colors from '~/styles/Colors';
 
-const UserMarker = ({ coordinate, description, title, userId, heading, ...props }: Omit<MarkerData, "image"> & { heading?: LocationHeadingObject } & MapMarkerProps) => {
-    const animatedValue = useRef(new Animated.Value(1)).current;
+const UserMarker = ({ description, title, userId, ...props }: { description: string, title: string, userId: string } & Omit<MapMarkerProps, "coordinate">) => {
+    const { colorScheme } = useColorScheme();
 
-    const rotate = () => {
-        Animated.timing(animatedValue, {
-            toValue: heading?.trueHeading || 0,
-            duration: 900,
-            useNativeDriver: true
-        }).start();
-        return true
-    };
+    const [position, _setPosition] = useAtom(positionAtom)
+    const [heading, _setHeading] = useAtom(headingAtom)
 
-    useEffect(() => {
-        rotate()
-    }, [heading])
+    if (!position || !heading) {
+        return null
+    }
 
     return (
         <>
-            <MarkerAnimated
+            <AnimatedMarker
                 {...props}
+                heading={heading.trueHeading}
+                latitude={position.coords.latitude}
+                longitude={position.coords.longitude}
                 anchor={{ x: 0.5, y: 0.6 }}
-                coordinate={{
-                    latitude: coordinate.latitude,
-                    longitude: coordinate.longitude,
-                }}
                 flat
-                style={{
-                    ...(heading?.trueHeading !== -1 && {
-                        transform: [
-                            {
-                                rotate: animatedValue.interpolate({
-                                    inputRange: [0, 360],
-                                    outputRange: ['0deg', '360deg'],
-                                }),
-                            },
-                        ],
-                    }),
-                }}>
-                <View style={{
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    backgroundColor: 'transparent',
-                }}>
-                    <View style={[{
-                        width: 0,
-                        height: 0,
-                        backgroundColor: 'transparent',
-                        borderStyle: 'solid',
-                        borderLeftWidth: 6,
-                        borderRightWidth: 6,
-                        borderBottomWidth: 10,
-                        borderLeftColor: 'transparent',
-                        borderRightColor: 'transparent',
-                        borderBottomColor: 'rgb(0, 120, 255)',
-                    }]} />
-                    <View style={{
-                        backgroundColor: 'rgb(0, 120, 255)',
-                        width: 24,
-                        height: 24,
-                        borderWidth: 3,
-                        borderColor: 'white',
-                        borderRadius: 12,
-                        shadowColor: 'black',
-                        shadowOffset: {
-                            width: 1,
-                            height: 1,
-                        },
-                        shadowOpacity: 0.3,
-                        shadowRadius: 1.5,
-                        elevation: 4,
-                    }} />
-                </View>
-            </MarkerAnimated>
+            >
+                <MaterialIcons
+                    name="location-on"
+                    size={24}
+                    color={Colors[colorScheme ?? 'light'].text}
+                />
+            </AnimatedMarker>
             <Circle
                 center={{
-                    latitude: coordinate.latitude,
-                    longitude: coordinate.longitude,
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
                 }}
-                radius={coordinate.accuracy || 0}
+                radius={position.coords.accuracy || 0}
                 strokeColor="rgba(0, 150, 255, 0.5)"
                 fillColor="rgba(0, 150, 255, 0.5)"
             />
