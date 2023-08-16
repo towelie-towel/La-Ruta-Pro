@@ -35,7 +35,7 @@ const MapViewComponent = () => {
     const { isConnected, isInternetReachable } = NetInfo.useNetInfo();
 
     // const { markers, location, heading } = useMapConnection();
-    const { resetConnection, reseTracking } = useMapConnection();
+    const { resetConnection, trackPosition } = useMapConnection();
 
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isMenuVisible, setIsMenuVisible] = useState(true)
@@ -159,7 +159,7 @@ const MapViewComponent = () => {
     const taxiBtnHandler = useCallback(async () => {
         console.log({ isConnected, isInternetReachable })
         await resetConnection()
-        reseTracking()
+        trackPosition()
     }, [isConnected, isInternetReachable])
 
     return (

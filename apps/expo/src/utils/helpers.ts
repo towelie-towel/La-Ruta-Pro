@@ -78,8 +78,3 @@ export function polylineDecode(str: string, precision?: number) {
 
     return coordinates;
 };
-
-export const stringToBuffer = (str: string): ArrayBuffer => {
-    const encoder = new TextEncoder();
-    return encoder.encode(str).buffer;
-};

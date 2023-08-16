@@ -8,7 +8,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import NetInfo from '@react-native-community/netinfo';
 
 import { type MarkerData, initialMarkers } from '../constants/Markers';
-import { stringToBuffer } from '~/utils/helpers';
 
 export const markersAtom = atom<MarkerData[]>(initialMarkers)
 
@@ -59,78 +58,9 @@ const useMapConnection = () => {
 
     const ws = useRef<WebSocket | null>(null);
     const positionSubscrition = useRef<ExpoLocation.LocationSubscription | null>()
-    const positionStreaming = useRef<NodeJS.Timer | null>()
 
     const { isConnected, isInternetReachable } = NetInfo.useNetInfo();
     const { user, isLoaded, isSignedIn } = useUser();
-
-    const resetConnection = async () => {
-        try {
-
-            if (!isConnected || !isInternetReachable) {
-                throw new Error("No internet connection");
-            }
-
-            if (!ws.current || ws.current.readyState === WebSocket.CLOSED) {
-                ws.current = await asyncNewWebSocket()
-            } else {
-                console.log("a web socket is already stored", JSON.stringify(ws.current, null, 2))
-            }
-
-        } catch (error) {
-            console.error(error)
-        }
-    }
-
-    const reseTracking = () => {
-        if (!isConnected || !isInternetReachable) {
-            throw new Error("No internet connection");
-        }
-
-        if (!positionSubscrition.current) {
-            trackPosition().then((suscription) => {
-                positionSubscrition.current = suscription
-            }).catch((error) => {
-                console.log(error)
-            })
-        }
-    }
-
-    // i dont like this
-    const throwSocketError = () => {
-        if (!isConnected || !isInternetReachable) {
-            throw new Error("No internet connection");
-        }
-
-        if (ws.current?.readyState === WebSocket.CONNECTING) {
-            throw new Error("WS is connecting");
-        }
-
-        if (ws.current?.readyState === WebSocket.CLOSING) {
-            throw new Error("WS is closing");
-        }
-
-        if (ws.current?.readyState === WebSocket.CLOSED) {
-            throw new Error("WS is closed");
-        }
-    }
-
-    const sendStringToServer = (message: string) => {
-        const messageBuffer = stringToBuffer(message)
-        try {
-
-            if (ws.current?.readyState === WebSocket.OPEN) {
-                ws.current?.send(messageBuffer);
-                return;
-            } else {
-                // Why would i do this
-                throwSocketError()
-            }
-
-        } catch (error) {
-            console.error(error)
-        }
-    }
 
     const getLocation = () => {
         return ExpoLocation.getCurrentPositionAsync({});
@@ -140,35 +70,48 @@ const useMapConnection = () => {
         return ExpoLocation.getHeadingAsync();
     }
 
-    const handleWebSocketMessage = useCallback((event: MessageEvent<string>) => {
+    const sendStringToServer = (message: string) => {
+        if (ws.current?.readyState === WebSocket.OPEN) {
+            ws.current?.send(message);
+            return;
+        } else {
+            console.error("there is not websocket connnection open")
+        }
+    }
+
+    const handleWebSocketMessage = useCallback((event: MessageEvent<any>) => {
         // event.data.startsWith("markers-") ? void setMarkers(JSON.parse(event.data.replace("markers-", ""))) : null;
-        console.log(event.data)
+        if (event.data instanceof ArrayBuffer) {
+            // binary frame
+            const view = new DataView(event.data);
+            console.log(view.getInt32(0));
+        } else {
+            console.log(event.data);
+        }
         // event.data.startsWith("taxisActives-") ? void setMarkers(JSON.parse(event.data.replace("markers-", ""))) : null;
     }, []);
 
     const asyncNewWebSocket = async () => {
-        let protocol = (await AsyncStorage.getItem('userRole'))?.includes("client") ? 'map-client' : 'map-taxi';
-        if (isSignedIn) protocol += "-" + user.id
+        const protocol = (await AsyncStorage.getItem('userRole'))?.includes("client") ? 'map-client' : 'map-taxi';
 
         console.log("establishing web socket connection")
-        const suckItToMeBBy = new WebSocket(`ws://192.168.1.103:8658/subscribe`, protocol);
+        const suckItToMeBBy = new WebSocket(`ws://192.168.1.103:6942/subscribe`, protocol);
 
         suckItToMeBBy.addEventListener("open", (event) => {
-            console.log('%c Connection opened', 'background: orange; color: black;', event);
+            console.log('Connection opened', event);
+            // TODO: send the user id and role
+            // TODO: stream depending the role
             void setProfileState("streaming")
         });
 
         suckItToMeBBy.addEventListener('close', (event) => {
             void setProfileState("inactive")
-            positionStreaming.current && clearInterval(positionStreaming.current)
-            console.log('%c Connection closed', 'background: orange; color: black;', event);
-            console.log("a web socket is already stored", JSON.stringify(ws.current, null, 2))
+            console.log('Connection closed', event);
         });
 
         suckItToMeBBy.addEventListener('error', (error) => {
             void setProfileState("inactive")
-            positionStreaming.current && clearInterval(positionStreaming.current)
-            console.log('%c WebSocket error', 'background: red; color: black;', error);
+            console.log('WebSocket error', error);
         });
 
         suckItToMeBBy.addEventListener('message', handleWebSocketMessage);
@@ -177,24 +120,24 @@ const useMapConnection = () => {
     }
 
     const trackPosition = async () => {
-        const { granted } = await ExpoLocation.getForegroundPermissionsAsync()
+        const { granted: permissionGranted } = await ExpoLocation.getForegroundPermissionsAsync()
 
-        if (!granted) {
-            console.error('Permission to access location was denied');
-            return;
+        if (!permissionGranted) {
+            console.log('No Location permission granted, requesting permission');
+            await ExpoLocation.requestForegroundPermissionsAsync();
         }
 
         await ExpoLocation.enableNetworkProviderAsync()
 
-        const positionSubscrition = await ExpoLocation.watchPositionAsync(
+        const subscrition = await ExpoLocation.watchPositionAsync(
             {
                 accuracy: ExpoLocation.Accuracy.BestForNavigation,
                 timeInterval: 2000,
             },
             (newPosition) => {
+                console.log(newPosition)
                 try {
-                    if (profileState === "streaming") {
-                        console.log("streaming")
+                    if (profileStateRef.current === "streaming") {
                         const stringMessage = `${newPosition.coords.latitude},${newPosition.coords.longitude}`
                         sendStringToServer(stringMessage)
                     }
@@ -205,7 +148,7 @@ const useMapConnection = () => {
                             void setPositionHistory(async (oldPositionHistory) => [...((await oldPositionHistory) ?? []), newPosition])
                         })
                         .catch((error) => {
-                            console.log(error)
+                            console.error(error)
                         })
 
                 } catch (error) {
@@ -214,47 +157,53 @@ const useMapConnection = () => {
             },
 
         )
-        return positionSubscrition
+        console.log("Setting positionSubscrition")
+        positionSubscrition.current = subscrition
     }
 
-    const initWebSocket = async () => {
-        if (!ws.current) {
-            ws.current = await asyncNewWebSocket()
-        } else {
-            console.log("a web socket is already stored")
+    const resetConnection = async () => {
+        try {
+            if (!ws.current) {
+                console.log("initializasing web socket")
+                ws.current = await asyncNewWebSocket()
+            } else if (ws.current.readyState === WebSocket.OPEN) {
+                console.warn("a connection is already open")
+            } else if (ws.current.readyState === WebSocket.CLOSED) {
+                console.log("reseting connection")
+            } else {
+                console.error("(Cleaning ws) Unespected error - ws: ", JSON.stringify(ws.current, null, 2))
+                // TODO: handle CONNECTING and CLOSING cases
+            }
+
+        } catch (error) {
+            console.error(error)
         }
     }
 
     useEffect(() => {
-        console.log("useEffect-useMapConnection")
-        if (
-            isConnected
-            && isInternetReachable
-        ) {
-            if (ws.current?.readyState === ws.current?.CLOSED) {
-                void initWebSocket()
-            }
+        console.log("useMapConnection/useEffect/")
+        if (!positionSubscrition.current) {
+            void trackPosition()
+        }
 
-            if (!positionSubscrition.current) {
-                trackPosition().then((suscription) => {
-                    positionSubscrition.current = suscription
-                }).catch((error) => {
-                    console.log(error)
-                })
-            }
-        };
         return () => {
-            console.log("useEffect-useMapConnection-return")
-            if (positionStreaming.current) {
-                clearInterval(positionStreaming.current)
-                positionStreaming.current = null
-            }
+            console.log("useMapConnection/useEffect/return")
             if (positionSubscrition.current) {
+                console.log("removing positionSubscrition")
                 positionSubscrition.current.remove()
                 positionSubscrition.current = null
             }
-
         }
+    }, []);
+
+    useEffect(() => {
+        console.log("useMapConnection/useEffect/isConnected/")
+        if (!isConnected || !isInternetReachable) {
+            console.error("No internet connection");
+            void setProfileState("inactive")
+            return;
+        }
+        void resetConnection()
     }, [isConnected]);
 
     return {
@@ -267,7 +216,7 @@ const useMapConnection = () => {
         handleWebSocketMessage,
         positionHistory,
         resetConnection,
-        reseTracking
+        trackPosition
     }
 }
 
