@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"log"
 	"net"
 	"net/http"
@@ -20,23 +19,29 @@ func main() {
 	}
 }
 
+// development sockets requests goes to ws://192.168.1.103:6942
+const defaultAddr = "192.168.1.103:6942"
+
 // run starts a http.Server for the passed in address
 // with all requests handled by echoServer.
 func run() error {
+	addr := defaultAddr
 	if len(os.Args) < 2 {
-		return errors.New("please provide an address to listen on as the first argument")
+		log.Printf("No address provided, using default")
+	} else {
+		addr = os.Args[1]
 	}
 
-	l, err := net.Listen("tcp", os.Args[1])
+	l, err := net.Listen("tcp", addr)
 	if err != nil {
 		return err
 	}
 	log.Printf("listening on http://%v", l.Addr())
 
+	ms := newMainServer()
+
 	s := &http.Server{
-		Handler: echoServer{
-			logf: log.Printf,
-		},
+		Handler:      ms,
 		ReadTimeout:  time.Second * 10,
 		WriteTimeout: time.Second * 10,
 	}

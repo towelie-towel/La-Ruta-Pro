@@ -21,8 +21,8 @@ export const headingAtom = atom<ExpoLocation.LocationHeadingObject>({
     accuracy: 0,
 })
 
-const storedProfileRole = createJSONStorage<'taxi' | 'client'>(() => AsyncStorage)
-export const profileRoleAtom = atomWithStorage<'taxi' | 'client'>('userRole', "client", storedProfileRole)
+const storedProfileRole = createJSONStorage<'taxi' | 'client' | 'admin'>(() => AsyncStorage)
+export const profileRoleAtom = atomWithStorage<'taxi' | 'client' | 'admin'>('userRole', "client", storedProfileRole)
 
 const storedProfileState = createJSONStorage<'active' | 'streaming' | 'inactive'>(() => AsyncStorage)
 export const profileStateAtom = atomWithStorage<'active' | 'streaming' | 'inactive'>('profileState', "inactive", storedProfileState)
@@ -92,9 +92,10 @@ const useMapConnection = () => {
     }, []);
 
     const asyncNewWebSocket = async () => {
-        const protocol = (await AsyncStorage.getItem('userRole'))?.includes("client") ? 'map-client' : 'map-taxi';
+        const role = profileRoleRef.current;
+        const protocol = `map-${role}`;
 
-        console.log("establishing web socket connection")
+        console.log("establishing web socket connection with protocol: ", protocol)
         const suckItToMeBBy = new WebSocket(`ws://192.168.1.103:6942/subscribe`, protocol);
 
         suckItToMeBBy.addEventListener("open", (event) => {
