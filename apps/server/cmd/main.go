@@ -138,7 +138,7 @@ func newServer() *Server {
 		subscribers:    make(map[*subscriber]struct{}),
 		publishLimiter: rate.NewLimiter(rate.Every(time.Millisecond*100), 8),
 	}
-	mainServer.serveMux.Handle("/", http.FileServer(http.Dir("./assets/chat")))
+	mainServer.serveMux.Handle("/", http.FileServer(http.Dir("./chat")))
 	mainServer.serveMux.HandleFunc("/subscribe", mainServer.subscribeHandler)
 	mainServer.serveMux.HandleFunc("/publish", mainServer.publishHandler)
 
@@ -153,7 +153,6 @@ func (mainServer *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // it to all future messages.
 func (mainServer *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) {
 	c, err := websocket.Accept(w, r, nil)
-
 	if err != nil {
 		mainServer.logf("%v", err)
 		return
@@ -203,9 +202,6 @@ func (mainServer *Server) publishHandler(w http.ResponseWriter, r *http.Request)
 // messages and cancel the context if the connection drops.
 func (mainServer *Server) subscribe(ctx context.Context, c *websocket.Conn) error {
 	// ctx = c.CloseRead(ctx)
-
-	// protocol := c.Subprotocol()
-
 	s := &subscriber{
 		msgs: make(chan []byte, mainServer.defaultSmsBuff),
 		closeSlow: func() {
