@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net/http"
+	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -33,7 +36,7 @@ type Server struct {
 	taxiSubs   map[uuid.UUID]*Subscriber
 	clientSubs map[uuid.UUID]*Subscriber
 
-	taxiPositions map[uuid.UUID]string
+	taxiPositions map[uuid.UUID]Location
 }
 
 type Subscriber struct {
@@ -41,8 +44,50 @@ type Subscriber struct {
 	msgs      chan string
 	closeSlow func()
 	protocol  string
-	position  string
+	position  Location
 	conn      *websocket.Conn
+}
+
+type Location struct {
+	Latitude  float64
+	Longitude float64
+}
+
+func (loc Location) distanceTo(other Location) float64 {
+	lat1Rad := loc.Latitude * math.Pi / 180
+	lon1Rad := loc.Longitude * math.Pi / 180
+	lat2Rad := other.Latitude * math.Pi / 180
+	lon2Rad := other.Longitude * math.Pi / 180
+
+	deltaLat := lat2Rad - lat1Rad
+	deltaLon := lon2Rad - lon1Rad
+	a := math.Pow(math.Sin(deltaLat/2), 2) + math.Cos(lat1Rad)*math.Cos(lat2Rad)*math.Pow(math.Sin(deltaLon/2), 2)
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+	radius := 6371.0 // Earth's radius in kilometers
+
+	distance := radius * c
+
+	return distance
+}
+
+func (loc Location) String() string {
+	return fmt.Sprintf("%f,%f", loc.Latitude, loc.Longitude)
+}
+
+func parseLocation(location string) (Location, error) {
+	pair := strings.Split(location, ",")
+	if len(pair) != 2 {
+		return Location{}, fmt.Errorf("invalid location format")
+	}
+	latitude, err := strconv.ParseFloat(strings.TrimSpace(pair[0]), 64)
+	if err != nil {
+		return Location{}, fmt.Errorf("invalid latitude: %v", err)
+	}
+	longitude, err := strconv.ParseFloat(strings.TrimSpace(pair[1]), 64)
+	if err != nil {
+		return Location{}, fmt.Errorf("invalid longitude: %v", err)
+	}
+	return Location{Latitude: latitude, Longitude: longitude}, nil
 }
 
 // newChatServer constructs a chatServer with the defaults.
@@ -57,7 +102,7 @@ func newServer() *Server {
 		taxiSubs:   make(map[uuid.UUID]*Subscriber),
 		clientSubs: make(map[uuid.UUID]*Subscriber),
 
-		taxiPositions: make(map[uuid.UUID]string),
+		taxiPositions: make(map[uuid.UUID]Location),
 	}
 	s.serveMux.Handle("/", http.FileServer(http.Dir("./assets")))
 	s.serveMux.HandleFunc("/subscribe/", s.subscribeHandler)
@@ -186,8 +231,12 @@ func subReader(ctx context.Context, server *Server, ws *websocket.Conn, l *rate.
 		newPosition := strings.Split(msgString, "-")[1]
 		fmt.Printf("Position recieved: %s \n", newPosition)
 		server.connectionsMu.Lock()
+		loc, err := parseLocation(newPosition)
+		if err != nil {
+			return fmt.Errorf("failed to parse location: %v", err)
+		}
 		if protocols == "map-taxi" {
-			server.taxiPositions[id] = newPosition
+			server.taxiPositions[id] = loc
 		}
 		server.connectionsMu.Unlock()
 	}
@@ -214,10 +263,10 @@ func (server *Server) broadcastTaxis() {
 		if len(server.taxiPositions) != 0 {
 			var taxiPositionSlice []string
 			for id, position := range server.taxiPositions {
-				posAndId := position + "-" + id.String()
+				posAndId := position.String() + "&" + id.String()
 				taxiPositionSlice = append(taxiPositionSlice, posAndId)
 			}
-			taxiPositionString := strings.Join(taxiPositionSlice, ",")
+			taxiPositionString := strings.Join(taxiPositionSlice, "$")
 			for _, sub := range server.clientSubs {
 				err := sub.conn.Write(context.Background(), websocket.MessageText, []byte(taxiPositionString))
 				if err != nil {
@@ -228,4 +277,28 @@ func (server *Server) broadcastTaxis() {
 
 		server.connectionsMu.Unlock()
 	}
+}
+
+func (server *Server) getClosestPositions(location Location, x int) []Location {
+	// Calculate distances from targetLocation to all positions
+	distances := make(map[uuid.UUID]float64)
+	for id, pos := range server.taxiPositions {
+		distance := location.distanceTo(pos)
+		distances[id] = distance
+	}
+
+	// Sort the positions based on distances
+	sortedPositions := make([]Location, 0, len(distances))
+	for id := range distances {
+		sortedPositions = append(sortedPositions, server.taxiPositions[id])
+	}
+	sort.Slice(sortedPositions, func(i, j int) bool {
+		return distances[uuid.UUID{}] < distances[uuid.UUID{}]
+	})
+
+	// Return the nearest x positions
+	if x > len(sortedPositions) {
+		x = len(sortedPositions)
+	}
+	return sortedPositions[:x]
 }
