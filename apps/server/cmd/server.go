@@ -26,18 +26,23 @@ type Server struct {
 
 	serveMux http.ServeMux
 
-	subscribersMu sync.Mutex
-	subscribers   map[*Subscriber]struct{}
-	connections   map[*websocket.Conn]*Subscriber
+	connectionsMu sync.Mutex
+	connections   map[*websocket.Conn]uuid.UUID
 	entryCha      chan string
+
+	taxiSubs   map[uuid.UUID]*Subscriber
+	clientSubs map[uuid.UUID]*Subscriber
+
+	taxiPositions map[uuid.UUID]string
 }
 
 type Subscriber struct {
+	id        uuid.UUID
 	msgs      chan string
 	closeSlow func()
 	protocol  string
 	position  string
-	id        uuid.UUID
+	conn      *websocket.Conn
 }
 
 // newChatServer constructs a chatServer with the defaults.
@@ -45,13 +50,17 @@ func newServer() *Server {
 	s := &Server{
 		subscriberMessageBuffer: 16,
 		logf:                    log.Printf,
-		subscribers:             make(map[*Subscriber]struct{}),
-		connections:             make(map[*websocket.Conn]*Subscriber),
+		connections:             make(map[*websocket.Conn]uuid.UUID),
 		publishLimiter:          rate.NewLimiter(rate.Every(time.Millisecond*100), 8),
 		entryCha:                make(chan string),
+
+		taxiSubs:   make(map[uuid.UUID]*Subscriber),
+		clientSubs: make(map[uuid.UUID]*Subscriber),
+
+		taxiPositions: make(map[uuid.UUID]string),
 	}
 	s.serveMux.Handle("/", http.FileServer(http.Dir("./assets")))
-	s.serveMux.HandleFunc("/subscribe", s.subscribeHandler)
+	s.serveMux.HandleFunc("/subscribe/", s.subscribeHandler)
 
 	go s.broadcastTaxis()
 	go s.printSubsReads()
@@ -64,6 +73,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) {
+
+	idString := r.URL.Path[len("/subscribe/"):]
+	id, err := uuid.Parse(idString)
+	if err != nil {
+		server.logf("Invalid UUID: %v", err)
+		return
+	}
 	ws, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 		Subprotocols: []string{"map-admin", "map-client", "map-taxi"},
 	})
@@ -72,23 +88,31 @@ func (server *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	protocol := ws.Subprotocol()
-	fmt.Println("adding sub with protocol: ", protocol)
+	defer func() {
+		ws.Close(websocket.StatusInternalError, "the sky is falling")
+		server.deleteSubById(id)
+	}()
 
-	server.subscribersMu.Lock()
+	protocol := ws.Subprotocol()
+	fmt.Printf("adding sub with protocols: %v and id: %v\n ", protocol, id.String())
+
+	server.connectionsMu.Lock()
+	server.connections[ws] = id
 	sub := &Subscriber{
 		msgs:      make(chan string, server.subscriberMessageBuffer),
 		closeSlow: func() { ws.Close(websocket.StatusPolicyViolation, "slow subscriber") },
 		protocol:  protocol,
+		id:        id,
+		conn:      ws,
 	}
-	server.connections[ws] = sub
-	server.subscribers[sub] = struct{}{}
-	server.subscribersMu.Unlock()
-
-	defer func() {
-		ws.Close(websocket.StatusInternalError, "the sky is falling")
-		server.deleteSubscriber(sub)
-	}()
+	if protocol == "map-admin" {
+		server.logf("Wow, you are an admin, but this is not implemented yet")
+	} else if protocol == "map-taxi" {
+		server.taxiSubs[id] = sub
+	} else {
+		server.clientSubs[id] = sub
+	}
+	server.connectionsMu.Unlock()
 
 	l := rate.NewLimiter(rate.Every(time.Millisecond*100), 10)
 	for {
@@ -96,7 +120,7 @@ func (server *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) {
 		case <-r.Context().Done():
 			return
 		default:
-			err = subReader(r.Context(), ws, l, server.entryCha, sub)
+			err = subReader(r.Context(), server, ws, l, id)
 			if websocket.CloseStatus(err) == websocket.StatusNormalClosure {
 				return
 			}
@@ -108,34 +132,39 @@ func (server *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (server *Server) deleteSubscriber(s *Subscriber) {
-	server.subscribersMu.Lock()
-	defer server.subscribersMu.Unlock()
-
-	delete(server.subscribers, s)
+func (server *Server) deleteSubById(id uuid.UUID) {
+	server.connectionsMu.Lock()
+	defer server.connectionsMu.Unlock()
 
 	for ws, sub := range server.connections {
-		if s == sub {
+		if id == sub {
+			protocol := ws.Subprotocol()
+			if protocol == "map-taxi" {
+				delete(server.taxiSubs, id)
+			}
+			if protocol == "map-client" {
+				delete(server.clientSubs, id)
+			}
+			if protocol == "map-admin" {
+				server.logf("Wow, you are an admin, but this is not implemented yet")
+			}
 			delete(server.connections, ws)
 			return
 		}
 	}
 }
 
-func (server *Server) deleteConnection(w *websocket.Conn) {
-	server.subscribersMu.Lock()
-	defer server.subscribersMu.Unlock()
+func (server *Server) streamToClientByID(id uuid.UUID, message string) {
+	server.connectionsMu.Lock()
+	defer server.connectionsMu.Unlock()
 
-	for ws, sub := range server.connections {
-		if ws == w {
-			delete(server.subscribers, sub)
-			return
-		}
+	subscriber, exists := server.clientSubs[id]
+	if exists {
+		subscriber.msgs <- message
 	}
-	delete(server.connections, w)
 }
 
-func subReader(ctx context.Context, ws *websocket.Conn, l *rate.Limiter, entryCha chan string, sub *Subscriber) error {
+func subReader(ctx context.Context, server *Server, ws *websocket.Conn, l *rate.Limiter, id uuid.UUID) error {
 	err := l.Wait(ctx)
 	if err != nil {
 		return err
@@ -150,27 +179,21 @@ func subReader(ctx context.Context, ws *websocket.Conn, l *rate.Limiter, entryCh
 	if err != nil {
 		return fmt.Errorf("failed to read message: %w", err)
 	}
-	// convert msg to string
 	msgString := string(msg)
 
+	protocols := ws.Subprotocol()
 	if strings.HasPrefix(msgString, "pos") {
-		substring := strings.Split(msgString, "-")
-		fmt.Printf("Position recieved: %s \n", substring[1])
-		sub.position = substring[1]
-	} else if strings.HasPrefix(msgString, "id") {
-		substring := strings.Split(msgString, "|")
-		id, err := uuid.Parse(substring[1])
-		fmt.Printf("Id recieved: %s \n", id.String())
-		sub.id = id
-		if err != nil {
-			return fmt.Errorf("failed to parse id: %w", err)
+		newPosition := strings.Split(msgString, "-")[1]
+		fmt.Printf("Position recieved: %s \n", newPosition)
+		server.connectionsMu.Lock()
+		if protocols == "map-taxi" {
+			server.taxiPositions[id] = newPosition
 		}
+		server.connectionsMu.Unlock()
 	}
 
-	// Send the message to the entryCha channel
-	entryCha <- msgString
+	server.entryCha <- msgString
 
-	//err = c.Close(websocket.StatusNormalClosure, "")
 	return err
 }
 
@@ -186,27 +209,23 @@ func (server *Server) broadcastTaxis() {
 	defer ticker.Stop()
 
 	for range ticker.C {
-		server.subscribersMu.Lock()
-		if len(server.subscribers) > 0 {
-			var positionSlice []string
-			for sub := range server.subscribers {
-				if sub.position != "" && sub.id != uuid.Nil {
-					posAndId := sub.position + "-" + sub.id.String()
-					positionSlice = append(positionSlice, posAndId)
-				}
+		server.connectionsMu.Lock()
+
+		if len(server.taxiPositions) != 0 {
+			var taxiPositionSlice []string
+			for id, position := range server.taxiPositions {
+				posAndId := position + "-" + id.String()
+				taxiPositionSlice = append(taxiPositionSlice, posAndId)
 			}
-			positionString := strings.Join(positionSlice, ",")
-			fmt.Printf("len: %d, locations: %s \n", len(positionSlice), positionString)
-			if len(positionSlice) != 0 {
-				for ws := range server.connections {
-					err := ws.Write(context.Background(), websocket.MessageText, []byte(positionString))
-					if err != nil {
-						server.logf("failed to send last position to connection: %v", err)
-						// server.deleteConnection(ws)
-					}
+			taxiPositionString := strings.Join(taxiPositionSlice, ",")
+			for _, sub := range server.clientSubs {
+				err := sub.conn.Write(context.Background(), websocket.MessageText, []byte(taxiPositionString))
+				if err != nil {
+					server.logf("failed to send taxi positions to client connection: %v", err)
 				}
 			}
 		}
-		server.subscribersMu.Unlock()
+
+		server.connectionsMu.Unlock()
 	}
 }

@@ -6,7 +6,13 @@
   let ws;
   function dial() {
     console.log(location.host);
-    const conn = new WebSocket(`ws://${location.host}/subscribe`, "map-client");
+    // generate a random number between 10 and 99
+    const clientId = Math.floor(Math.random() * 900) + 100;
+
+    const conn = new WebSocket(
+      `ws://${location.host}/subscribe/6ec0bd7f-11c0-43da-975e-2a8ad9eba${clientId}`,
+      clientId > 500 ?"map-client" : "map-taxi",
+    );
     ws = conn;
 
     conn.addEventListener("close", (ev) => {
