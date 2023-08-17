@@ -6,122 +6,207 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"golang.org/x/time/rate"
-
 	"nhooyr.io/websocket"
 )
 
-// MainServer is the WebSocket echo server implementation.
-// It ensures the client speaks the echo subprotocol and
-// only allows one message every 100ms with a 10 message burst.
-type MainServer struct {
-	// subscriberMessageBuffer controls the max number
-	// of messages that can be queued for a subscriber
-	// before it is kicked.
-	//
-	// Defaults to 16.
+var ROLES = [3]string{"admin", "client", "taxi"}
+
+type Server struct {
 	subscriberMessageBuffer int
 
-	// publishLimiter controls the rate limit applied to the publish endpoint.
-	//
-	// Defaults to one publish every 100ms with a burst of 8.
 	publishLimiter *rate.Limiter
 
-	// logf controls where logs are sent.
-	// Defaults to log.Printf.
 	logf func(f string, v ...interface{})
 
-	// serveMux routes the various endpoints to the appropriate handler.
 	serveMux http.ServeMux
 
 	subscribersMu sync.Mutex
-	subscribers   map[*subscriber]struct{}
+	subscribers   map[*Subscriber]struct{}
+	connections   map[*websocket.Conn]*Subscriber
+	entryCha      chan string
 }
 
-// subscriber represents a subscriber.
-// Messages are sent on the msgs channel and if the client
-// cannot keep up with the messages, closeSlow is called.
-type subscriber struct {
-	msgs      chan []byte
+type Subscriber struct {
+	msgs      chan string
 	closeSlow func()
+	protocol  string
+	position  string
+	id        uuid.UUID
 }
 
 // newChatServer constructs a chatServer with the defaults.
-func newMainServer() *MainServer {
-	ms := &MainServer{
+func newServer() *Server {
+	s := &Server{
 		subscriberMessageBuffer: 16,
 		logf:                    log.Printf,
-		subscribers:             make(map[*subscriber]struct{}),
+		subscribers:             make(map[*Subscriber]struct{}),
+		connections:             make(map[*websocket.Conn]*Subscriber),
 		publishLimiter:          rate.NewLimiter(rate.Every(time.Millisecond*100), 8),
+		entryCha:                make(chan string),
 	}
-	// ms.serveMux.Handle("/", http.FileServer(http.Dir(".")))
-	ms.serveMux.HandleFunc("/subscribe", ms.subscribeHandler)
+	s.serveMux.Handle("/", http.FileServer(http.Dir("./assets")))
+	s.serveMux.HandleFunc("/subscribe", s.subscribeHandler)
 
-	return ms
+	go s.broadcastTaxis()
+	go s.printSubsReads()
+
+	return s
 }
 
-func (cs *MainServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	cs.serveMux.ServeHTTP(w, r)
+func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.serveMux.ServeHTTP(w, r)
 }
 
-func (ms *MainServer) subscribeHandler(w http.ResponseWriter, r *http.Request) {
-	c, err := websocket.Accept(w, r, &websocket.AcceptOptions{
+func (server *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) {
+	ws, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 		Subprotocols: []string{"map-admin", "map-client", "map-taxi"},
 	})
 	if err != nil {
-		ms.logf("%v", err)
+		server.logf("%v", err)
 		return
 	}
-	defer c.Close(websocket.StatusInternalError, "the sky is falling")
 
-	if c.Subprotocol() != "map-admin" && c.Subprotocol() != "map-client" && c.Subprotocol() != "map-taxi" {
-		c.Close(websocket.StatusPolicyViolation, "client must speak a map subprotocol")
-		return
+	protocol := ws.Subprotocol()
+	fmt.Println("adding sub with protocol: ", protocol)
+
+	server.subscribersMu.Lock()
+	sub := &Subscriber{
+		msgs:      make(chan string, server.subscriberMessageBuffer),
+		closeSlow: func() { ws.Close(websocket.StatusPolicyViolation, "slow subscriber") },
+		protocol:  protocol,
 	}
+	server.connections[ws] = sub
+	server.subscribers[sub] = struct{}{}
+	server.subscribersMu.Unlock()
+
+	defer func() {
+		ws.Close(websocket.StatusInternalError, "the sky is falling")
+		server.deleteSubscriber(sub)
+	}()
 
 	l := rate.NewLimiter(rate.Every(time.Millisecond*100), 10)
 	for {
-		err = echo(r.Context(), c, l)
-		if websocket.CloseStatus(err) == websocket.StatusNormalClosure {
+		select {
+		case <-r.Context().Done():
 			return
+		default:
+			err = subReader(r.Context(), ws, l, server.entryCha, sub)
+			if websocket.CloseStatus(err) == websocket.StatusNormalClosure {
+				return
+			}
+			if err != nil {
+				server.logf("failed to echo with %v: %v", r.RemoteAddr, err)
+				return
+			}
 		}
-		if err != nil {
-			ms.logf("failed to echo with %v: %v", r.RemoteAddr, err)
+	}
+}
+
+func (server *Server) deleteSubscriber(s *Subscriber) {
+	server.subscribersMu.Lock()
+	defer server.subscribersMu.Unlock()
+
+	delete(server.subscribers, s)
+
+	for ws, sub := range server.connections {
+		if s == sub {
+			delete(server.connections, ws)
 			return
 		}
 	}
 }
 
-// echo reads from the WebSocket connection and then writes
-// the received message back to it.
-// The entire function has 10s to complete.
-func echo(ctx context.Context, c *websocket.Conn, l *rate.Limiter) error {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
-	defer cancel()
+func (server *Server) deleteConnection(w *websocket.Conn) {
+	server.subscribersMu.Lock()
+	defer server.subscribersMu.Unlock()
 
+	for ws, sub := range server.connections {
+		if ws == w {
+			delete(server.subscribers, sub)
+			return
+		}
+	}
+	delete(server.connections, w)
+}
+
+func subReader(ctx context.Context, ws *websocket.Conn, l *rate.Limiter, entryCha chan string, sub *Subscriber) error {
 	err := l.Wait(ctx)
 	if err != nil {
 		return err
 	}
 
-	typ, r, err := c.Reader(ctx)
+	_, r, err := ws.Reader(ctx)
 	if err != nil {
 		return err
 	}
 
-	w, err := c.Writer(ctx, typ)
+	msg, err := io.ReadAll(r)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read message: %w", err)
+	}
+	// convert msg to string
+	msgString := string(msg)
+
+	if strings.HasPrefix(msgString, "pos") {
+		substring := strings.Split(msgString, "-")
+		fmt.Printf("Position recieved: %s \n", substring[1])
+		sub.position = substring[1]
+	} else if strings.HasPrefix(msgString, "id") {
+		substring := strings.Split(msgString, "|")
+		id, err := uuid.Parse(substring[1])
+		fmt.Printf("Id recieved: %s \n", id.String())
+		sub.id = id
+		if err != nil {
+			return fmt.Errorf("failed to parse id: %w", err)
+		}
 	}
 
-	_, err = io.Copy(w, r)
-	if err != nil {
-		return fmt.Errorf("failed to io.Copy: %w", err)
-	}
+	// Send the message to the entryCha channel
+	entryCha <- msgString
 
-	err = w.Close()
+	//err = c.Close(websocket.StatusNormalClosure, "")
 	return err
+}
+
+func (server *Server) printSubsReads() {
+	for {
+		msg := <-server.entryCha
+		fmt.Println("Recieved string: ", msg)
+	}
+}
+
+func (server *Server) broadcastTaxis() {
+	ticker := time.NewTicker(2 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		server.subscribersMu.Lock()
+		if len(server.subscribers) > 0 {
+			var positionSlice []string
+			for sub := range server.subscribers {
+				if sub.position != "" && sub.id != uuid.Nil {
+					posAndId := sub.position + "-" + sub.id.String()
+					positionSlice = append(positionSlice, posAndId)
+				}
+			}
+			positionString := strings.Join(positionSlice, ",")
+			fmt.Printf("len: %d, locations: %s \n", len(positionSlice), positionString)
+			if len(positionSlice) != 0 {
+				for ws := range server.connections {
+					err := ws.Write(context.Background(), websocket.MessageText, []byte(positionString))
+					if err != nil {
+						server.logf("failed to send last position to connection: %v", err)
+						// server.deleteConnection(ws)
+					}
+				}
+			}
+		}
+		server.subscribersMu.Unlock()
+	}
 }

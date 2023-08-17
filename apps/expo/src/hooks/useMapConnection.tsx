@@ -128,6 +128,11 @@ const useMapConnection = () => {
             await ExpoLocation.requestForegroundPermissionsAsync();
         }
 
+        if (positionSubscrition.current) {
+            console.log("there is already a position subscrition")
+            return;
+        }
+
         await ExpoLocation.enableNetworkProviderAsync()
 
         const subscrition = await ExpoLocation.watchPositionAsync(
@@ -136,7 +141,7 @@ const useMapConnection = () => {
                 timeInterval: 2000,
             },
             (newPosition) => {
-                console.log(newPosition)
+                console.log("watchPositionAsync", newPosition)
                 try {
                     if (profileStateRef.current === "streaming") {
                         const stringMessage = `${newPosition.coords.latitude},${newPosition.coords.longitude}`
@@ -163,6 +168,12 @@ const useMapConnection = () => {
     }
 
     const resetConnection = async () => {
+        if (!isConnected || !isInternetReachable) {
+            console.error("No internet connection");
+            void setProfileState("inactive")
+            return;
+        }
+
         try {
             if (!ws.current) {
                 console.log("initializasing web socket")
@@ -171,6 +182,7 @@ const useMapConnection = () => {
                 console.warn("a connection is already open")
             } else if (ws.current.readyState === WebSocket.CLOSED) {
                 console.log("reseting connection")
+                ws.current = await asyncNewWebSocket()
             } else {
                 console.error("(Cleaning ws) Unespected error - ws: ", JSON.stringify(ws.current, null, 2))
                 // TODO: handle CONNECTING and CLOSING cases
@@ -199,11 +211,6 @@ const useMapConnection = () => {
 
     useEffect(() => {
         console.log("useMapConnection/useEffect/isConnected/")
-        if (!isConnected || !isInternetReachable) {
-            console.error("No internet connection");
-            void setProfileState("inactive")
-            return;
-        }
         void resetConnection()
     }, [isConnected]);
 

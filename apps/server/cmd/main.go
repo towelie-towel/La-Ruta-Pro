@@ -38,10 +38,9 @@ func run() error {
 	}
 	log.Printf("listening on http://%v", l.Addr())
 
-	ms := newMainServer()
-
+	server := newServer()
 	s := &http.Server{
-		Handler:      ms,
+		Handler:      server,
 		ReadTimeout:  time.Second * 10,
 		WriteTimeout: time.Second * 10,
 	}
