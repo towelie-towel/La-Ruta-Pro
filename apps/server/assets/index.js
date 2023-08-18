@@ -10,8 +10,8 @@
     const clientId = Math.floor(Math.random() * 900) + 100;
 
     const conn = new WebSocket(
-      `ws://${location.host}/subscribe/6ec0bd7f-11c0-43da-975e-2a8ad9eba${clientId}`,
-      clientId > 500 ?"map-client" : "map-taxi",
+      `ws://${location.host}/subscribe?id=6ec0bd7f-11c0-43da-975e-2a8ad9eba${clientId}&lat=51.5073509&lon=-0.1277581999999997`,
+      clientId > 500 ? "map-client" : "map-taxi",
     );
     ws = conn;
 

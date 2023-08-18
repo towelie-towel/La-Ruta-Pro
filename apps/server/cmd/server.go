@@ -85,7 +85,7 @@ func newServer() *Server {
 		taxiPositions: make(map[uuid.UUID]Location),
 	}
 	s.serveMux.Handle("/", http.FileServer(http.Dir("./assets")))
-	s.serveMux.HandleFunc("/subscribe/", s.subscribeHandler)
+	s.serveMux.HandleFunc("/subscribe", s.subscribeHandler)
 
 	go s.broadcastTaxis()
 	go s.printSubsReads()
@@ -98,20 +98,24 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) {
-	latQ, lonQ, idQ := r.URL.Query().Get("lat"), r.URL.Query().Get("lon"), r.URL.Query().Get("id")
+	querys := r.URL.Query()
+	latQ, lonQ, idQ := querys.Get("lat"), querys.Get("lon"), querys.Get("id")
+
 	lat, err := strconv.ParseFloat(latQ, 64)
 	if err != nil {
-		server.logf("Invalid latitude: %v", err)
+		server.logf("invalid latitude: %v", err)
 		return
 	}
+
 	lon, err := strconv.ParseFloat(lonQ, 64)
 	if err != nil {
-		server.logf("Invalid longitude: %v", err)
+		server.logf("invalid longitude: %v", err)
 		return
 	}
+
 	id, err := uuid.Parse(idQ)
 	if err != nil {
-		server.logf("Invalid UUID: %v", err)
+		server.logf("invalid UUID: %v", err)
 		return
 	}
 
@@ -182,6 +186,7 @@ func (server *Server) deleteSubById(id uuid.UUID) {
 			protocol := ws.Subprotocol()
 			if protocol == "map-taxi" {
 				delete(server.taxiSubs, id)
+				delete(server.taxiPositions, id)
 			}
 			if protocol == "map-client" {
 				delete(server.clientSubs, id)

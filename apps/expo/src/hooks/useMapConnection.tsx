@@ -96,7 +96,7 @@ const useMapConnection = () => {
         const protocol = `map-${role}`;
 
         console.log("establishing web socket connection with protocol: ", protocol)
-        const suckItToMeBBy = new WebSocket(`ws://192.168.1.103:6942/subscribe`, protocol);
+        const suckItToMeBBy = new WebSocket(`ws://192.168.1.103:6942/subscribe?id=6ec0bd7f-11c0-43da-975e-2a8ad9eba&lat=51.5073509&lon=-0.1277581999999997`, protocol);
 
         suckItToMeBBy.addEventListener("open", (event) => {
             console.log('Connection opened', event);
