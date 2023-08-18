@@ -19,11 +19,8 @@ func main() {
 	}
 }
 
-// development sockets requests goes to ws://192.168.1.103:6942
 const defaultAddr = "192.168.1.103:6942"
 
-// run starts a http.Server for the passed in address
-// with all requests handled by echoServer.
 func run() error {
 	addr := defaultAddr
 	if len(os.Args) < 2 {

@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -49,29 +47,12 @@ type Subscriber struct {
 }
 
 type Location struct {
-	Latitude  float64
-	Longitude float64
-}
-
-func (loc Location) distanceTo(other Location) float64 {
-	lat1Rad := loc.Latitude * math.Pi / 180
-	lon1Rad := loc.Longitude * math.Pi / 180
-	lat2Rad := other.Latitude * math.Pi / 180
-	lon2Rad := other.Longitude * math.Pi / 180
-
-	deltaLat := lat2Rad - lat1Rad
-	deltaLon := lon2Rad - lon1Rad
-	a := math.Pow(math.Sin(deltaLat/2), 2) + math.Cos(lat1Rad)*math.Cos(lat2Rad)*math.Pow(math.Sin(deltaLon/2), 2)
-	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
-	radius := 6371.0 // Earth's radius in kilometers
-
-	distance := radius * c
-
-	return distance
+	Lat float64
+	Lon float64
 }
 
 func (loc Location) String() string {
-	return fmt.Sprintf("%f,%f", loc.Latitude, loc.Longitude)
+	return fmt.Sprintf("%f,%f", loc.Lat, loc.Lon)
 }
 
 func parseLocation(location string) (Location, error) {
@@ -87,10 +68,9 @@ func parseLocation(location string) (Location, error) {
 	if err != nil {
 		return Location{}, fmt.Errorf("invalid longitude: %v", err)
 	}
-	return Location{Latitude: latitude, Longitude: longitude}, nil
+	return Location{Lat: latitude, Lon: longitude}, nil
 }
 
-// newChatServer constructs a chatServer with the defaults.
 func newServer() *Server {
 	s := &Server{
 		subscriberMessageBuffer: 16,
@@ -118,13 +98,28 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) {
-
-	idString := r.URL.Path[len("/subscribe/"):]
-	id, err := uuid.Parse(idString)
+	latQ, lonQ, idQ := r.URL.Query().Get("lat"), r.URL.Query().Get("lon"), r.URL.Query().Get("id")
+	lat, err := strconv.ParseFloat(latQ, 64)
+	if err != nil {
+		server.logf("Invalid latitude: %v", err)
+		return
+	}
+	lon, err := strconv.ParseFloat(lonQ, 64)
+	if err != nil {
+		server.logf("Invalid longitude: %v", err)
+		return
+	}
+	id, err := uuid.Parse(idQ)
 	if err != nil {
 		server.logf("Invalid UUID: %v", err)
 		return
 	}
+
+	coord := Location{
+		Lat: lat,
+		Lon: lon,
+	}
+
 	ws, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 		Subprotocols: []string{"map-admin", "map-client", "map-taxi"},
 	})
@@ -149,6 +144,7 @@ func (server *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) {
 		protocol:  protocol,
 		id:        id,
 		conn:      ws,
+		position:  coord,
 	}
 	if protocol == "map-admin" {
 		server.logf("Wow, you are an admin, but this is not implemented yet")
@@ -196,16 +192,6 @@ func (server *Server) deleteSubById(id uuid.UUID) {
 			delete(server.connections, ws)
 			return
 		}
-	}
-}
-
-func (server *Server) streamToClientByID(id uuid.UUID, message string) {
-	server.connectionsMu.Lock()
-	defer server.connectionsMu.Unlock()
-
-	subscriber, exists := server.clientSubs[id]
-	if exists {
-		subscriber.msgs <- message
 	}
 }
 
@@ -277,28 +263,4 @@ func (server *Server) broadcastTaxis() {
 
 		server.connectionsMu.Unlock()
 	}
-}
-
-func (server *Server) getClosestPositions(location Location, x int) []Location {
-	// Calculate distances from targetLocation to all positions
-	distances := make(map[uuid.UUID]float64)
-	for id, pos := range server.taxiPositions {
-		distance := location.distanceTo(pos)
-		distances[id] = distance
-	}
-
-	// Sort the positions based on distances
-	sortedPositions := make([]Location, 0, len(distances))
-	for id := range distances {
-		sortedPositions = append(sortedPositions, server.taxiPositions[id])
-	}
-	sort.Slice(sortedPositions, func(i, j int) bool {
-		return distances[uuid.UUID{}] < distances[uuid.UUID{}]
-	})
-
-	// Return the nearest x positions
-	if x > len(sortedPositions) {
-		x = len(sortedPositions)
-	}
-	return sortedPositions[:x]
 }
