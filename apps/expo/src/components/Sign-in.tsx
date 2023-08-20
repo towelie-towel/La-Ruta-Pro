@@ -2,42 +2,32 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
     LayoutAnimation, TextInput, ActivityIndicator, KeyboardAvoidingView,
 } from 'react-native';
-import { useAuth, useSignIn } from "@clerk/clerk-expo";
 import { Stack, usePathname, useRouter } from 'expo-router';
 import { type DrawerNavigationProp } from '@react-navigation/drawer';
 import { Image } from 'expo-image';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useColorScheme } from "nativewind";
-import { useAtom } from 'jotai'
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import TuRutaLogo from '../../assets/Logo.png'
+import { supabase } from '../lib/supabase'
 import { type DrawerParamList } from '../app';
 import { PressBtn } from '../styles/PressBtn';
 import { View, Text } from '../styles/Themed';
 import Colors from '../styles/Colors';
-import SignWithOAuth from './SignWithOAuth';
-
-import { signMethodAtom } from './Sign-up';
 
 export default function SignIn({ navigation }: { navigation?: DrawerNavigationProp<DrawerParamList> }) {
 
-    const { isSignedIn } = useAuth()
-    const { signIn, setActive, isLoaded } = useSignIn();
     const { colorScheme } = useColorScheme();
     const pathName = usePathname()
-    const { back, replace } = useRouter()
+    const { replace } = useRouter()
     const isOnSignInRoute = pathName.includes("sign-in")
 
     const passWordRef = useRef<TextInput>(null)
-    const [credential, setCredential] = useState('');
-    const [credentialError, _setCredentialError] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
+    const [phoneNumberError, _sePphoneNumberError] = useState('');
     const [password, setPassword] = useState('');
     const [passwordError, _setPasswordError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isReduced, setIsReduced] = useState(false)
-    const [signMethod, _setSignMethod] = useAtom(signMethodAtom);
 
     useEffect(() => {
         console.log("open Sign-in")
@@ -52,41 +42,17 @@ export default function SignIn({ navigation }: { navigation?: DrawerNavigationPr
     }
 
     const handleSignIn = async () => {
-        if (!isLoaded) {
-            throw new Error("useSignIn isn't loaded")
-            return;
+
+        const { error } = await supabase.auth.signInWithPassword({
+            phone: '+53' + phoneNumber.trim(),
+            password: "some-password"
+        })
+        if (error) {
+            console.error(JSON.stringify(error, null, 2))
+            setIsLoading(false)
+            return
         }
-        try {
-            setIsLoading(true);
-
-            const completeSignIn = await signIn.create({
-                identifier: credential.trim(),
-                password,
-            });
-
-            await setActive({ session: completeSignIn.createdSessionId });
-
-            setIsLoading(false);
-
-            /* if (isOnSignInRoute) {
-                back()
-            } else {
-                navigation?.navigate('Map')
-            } */
-        } catch (err) {
-            console.error(JSON.stringify(err, null, 2));
-            setIsLoading(false);
-        }
-    }
-
-    if (isSignedIn) {
-        if (isOnSignInRoute) {
-            console.log(`SignIn_signed_Render - path_${pathName} - action_replace('/')`)
-            replace('/')
-        } else {
-            console.log(`SignIn_signed_Render - path_${pathName} - action_navigation?.navigate('Map')`)
-            navigation?.navigate('Map')
-        }
+        setIsLoading(false)
     }
 
     return (
@@ -101,14 +67,9 @@ export default function SignIn({ navigation }: { navigation?: DrawerNavigationPr
                     display: isReduced ? 'none' : 'flex',
                 }}
             >
-                <Text
-                    numberOfLines={2}
-                    adjustsFontSizeToFit
-                    className='font-bold text-3xl text-center max-[367px]:text-2xl'
-                >Bienvenido Otra Vez</Text>
+                <Text numberOfLines={2} adjustsFontSizeToFit className='font-bold text-3xl text-center max-[367px]:text-2xl'>Bienvenido Otra Vez</Text>
                 <Image
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                    source={TuRutaLogo}
+                    source={require('../../assets/Logo.png')}
                     alt='Tu-Ruta Logo'
                     className='h-16 w-14 max-[367px]:h-12 max-[367px]:w-12 max-[340px]:h-12 max-[340px]:w-10 mt-4 max-[367px]:my-0'
                 />
@@ -116,24 +77,14 @@ export default function SignIn({ navigation }: { navigation?: DrawerNavigationPr
 
 
             <KeyboardAvoidingView behavior="height" className='w-full justify-center items-center'>
-                <SignWithOAuth action={'sign-in'} isReduced={isReduced}
-                    afterOauthFlow={() => {
-                        console.log(`SignIn_afterOauthFlow - path_${pathName} - isSignedIn_${isSignedIn}`)
-                        if (!isOnSignInRoute) {
-                            back()
-                        } else {
-                            navigation?.navigate('Map')
-                        }
-                    }}
-                />
                 <View className={'w-4/5 max-[367px]:w-2/3 mb-4 max-[367px]:mb-2 relative justify-center items-center'}>
                     <TextInput
                         className={'h-12 max-[367px]:h-10 w-[80%] px-4 border rounded border-gray-300 dark:text-slate-500 dark:bg-transparent dark:border-gray-600'}
-                        placeholder="Teléfono, email o usuario"
+                        placeholder="Teléfono"
                         autoCapitalize="none"
                         placeholderTextColor={colorScheme === 'dark' ? "rgb(107 114 128)" : "gray"}
-                        onChangeText={setCredential}
-                        value={credential}
+                        onChangeText={setPhoneNumber}
+                        value={phoneNumber}
 
                         onFocus={() => {
                             reduceLogo()
@@ -141,7 +92,7 @@ export default function SignIn({ navigation }: { navigation?: DrawerNavigationPr
                         onSubmitEditing={() => passWordRef.current?.focus()}
                     />
                     {
-                        credentialError &&
+                        phoneNumberError &&
                         <View className='absolute right-2 my-auto'>
                             <MaterialIcons
                                 name='error'

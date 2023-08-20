@@ -11,6 +11,15 @@ import { type MarkerData, initialMarkers } from '../constants/Markers';
 
 export const markersAtom = atom<MarkerData[]>(initialMarkers)
 
+// 🔓🔒🗡️💣🔫🔪📴📳📲💻🖥️
+// 📸📷📺🎬🎥📽️💡🕯️🔎🔍🔦
+// 📃🔖🏷️💰💵📨📦📪📭📬📫
+// 📁📂💼📌📈📉⌛⏲️🕰️⏱️⏰
+// 🎭🪄🔮🎲🔨⛏️⚒️🛠️🔧🪛🔩
+// 🎶🎵🗑️🪠🧻🚽🛁🚿🎯🌀🌬️
+// ⚡🔥❄️🌊💧💨💦💥💫🕳️♻️
+// ❌🆘⛔⭕🔞📵🚭🚫☢️❗☣️
+
 const storedPositionHistory = createJSONStorage<ExpoLocation.LocationObject[] | undefined>(() => AsyncStorage)
 const positionHistoryAtom = atomWithStorage<ExpoLocation.LocationObject[] | undefined>('historyPosition', undefined, storedPositionHistory)
 
@@ -75,44 +84,47 @@ const useMapConnection = () => {
             ws.current?.send(message);
             return;
         } else {
-            console.error("there is not websocket connnection open")
+            console.error("❌ sendStringToServer ==> !WebSocket.OPEN")
         }
     }
 
     const handleWebSocketMessage = useCallback((event: MessageEvent<any>) => {
-        // event.data.startsWith("markers-") ? void setMarkers(JSON.parse(event.data.replace("markers-", ""))) : null;
+        // event.data.startsWith("taxis-") ? void setMarkers(JSON.parse(event.data.replace("markers-", ""))) : null;
+        // event.data.startsWith("stream-") ? void setMarkers(JSON.parse(event.data.replace("markers-", ""))) : null;
         if (event.data instanceof ArrayBuffer) {
-            // binary frame
             const view = new DataView(event.data);
             console.log(view.getInt32(0));
         } else {
             console.log(event.data);
         }
-        // event.data.startsWith("taxisActives-") ? void setMarkers(JSON.parse(event.data.replace("markers-", ""))) : null;
     }, []);
 
     const asyncNewWebSocket = async () => {
         const role = profileRoleRef.current;
         const protocol = `map-${role}`;
 
-        console.log("establishing web socket connection with protocol: ", protocol)
+        console.log("☢️ asyncNewWebSocket ==> websuckItToMeBBy ", protocol)
         const suckItToMeBBy = new WebSocket(`ws://192.168.1.103:6942/subscribe?id=6ec0bd7f-11c0-43da-975e-2a8ad9eba&lat=51.5073509&lon=-0.1277581999999997`, protocol);
 
+        // TODO: stream depending the role
         suckItToMeBBy.addEventListener("open", (event) => {
-            console.log('Connection opened', event);
-            // TODO: send the user id and role
-            // TODO: stream depending the role
-            void setProfileState("streaming")
+            console.log("🎯 asyncNewWebSocket ==> (Connection opened) state profileState===\"streaming\"");
+            // TODO: handle admin case
+            if (profileRoleRef.current === "taxi") {
+                void setProfileState("active")
+            } else if (profileRoleRef.current === "client" && streamingToRef.current !== null) {
+                void setProfileState("streaming")
+            }
         });
 
         suckItToMeBBy.addEventListener('close', (event) => {
+            console.log("❌ asyncNewWebSocket ==> (Connection closed) state profileState===\"inactive\"");
             void setProfileState("inactive")
-            console.log('Connection closed', event);
         });
 
         suckItToMeBBy.addEventListener('error', (error) => {
+            console.log("💥 asyncNewWebSocket ==> (Connection error) state profileState===\"inactive\"");
             void setProfileState("inactive")
-            console.log('WebSocket error', error);
         });
 
         suckItToMeBBy.addEventListener('message', handleWebSocketMessage);
@@ -124,12 +136,12 @@ const useMapConnection = () => {
         const { granted: permissionGranted } = await ExpoLocation.getForegroundPermissionsAsync()
 
         if (!permissionGranted) {
-            console.log('No Location permission granted, requesting permission');
+            console.log('🚫 trackPosition ==> permissionGranted = false (requesting permission)');
             await ExpoLocation.requestForegroundPermissionsAsync();
         }
 
         if (positionSubscrition.current) {
-            console.log("there is already a position subscrition")
+            console.log("🌬️ trackPosition ==> positionSubscrition = true ")
             return;
         }
 
@@ -141,7 +153,6 @@ const useMapConnection = () => {
                 timeInterval: 2000,
             },
             (newPosition) => {
-                console.log("watchPositionAsync", newPosition)
                 try {
                     if (profileStateRef.current === "streaming") {
                         const stringMessage = `${newPosition.coords.latitude},${newPosition.coords.longitude}`
@@ -163,28 +174,28 @@ const useMapConnection = () => {
             },
 
         )
-        console.log("Setting positionSubscrition")
+        console.log("📌 trackPosition ==> (Setted positionSubscrition)")
         positionSubscrition.current = subscrition
     }
 
     const resetConnection = async () => {
         if (!isConnected || !isInternetReachable) {
-            console.error("No internet connection");
+            console.warn("💣 ==> No internet connection ==> profileState===\"inactive\"");
             void setProfileState("inactive")
             return;
         }
 
         try {
             if (!ws.current) {
-                console.log("initializasing web socket")
+                console.log("🎯 resetConnection ==> initializasing web socket")
                 ws.current = await asyncNewWebSocket()
             } else if (ws.current.readyState === WebSocket.OPEN) {
-                console.warn("a connection is already open")
+                console.warn("🌬️ resetConnection ==> a connection is already open")
             } else if (ws.current.readyState === WebSocket.CLOSED) {
-                console.log("reseting connection")
+                console.log("🚿 resetConnection ==> reseting connection")
                 ws.current = await asyncNewWebSocket()
             } else {
-                console.error("(Cleaning ws) Unespected error - ws: ", JSON.stringify(ws.current, null, 2))
+                console.error("🪠 resetConnection ==> ws.current.readyState = \"CONNECTING\" || \"CLOSING\" ", JSON.stringify(ws.current, null, 2))
                 // TODO: handle CONNECTING and CLOSING cases
             }
 
@@ -194,15 +205,14 @@ const useMapConnection = () => {
     }
 
     useEffect(() => {
-        console.log("useMapConnection/useEffect/")
         if (!positionSubscrition.current) {
+            console.log("📭 <== useEffect ==> hooks/useMapConnection.tsx ==> []")
             void trackPosition()
         }
 
         return () => {
-            console.log("useMapConnection/useEffect/return")
             if (positionSubscrition.current) {
-                console.log("removing positionSubscrition")
+                console.log("📪 <== useEffect-return ==> hooks/useMapConnection.tsx ==> [] (🔪positionSubscrition)")
                 positionSubscrition.current.remove()
                 positionSubscrition.current = null
             }
@@ -210,7 +220,7 @@ const useMapConnection = () => {
     }, []);
 
     useEffect(() => {
-        console.log("useMapConnection/useEffect/isConnected/")
+        console.log("📭 <== useEffect ==> hooks/useMapConnection.tsx ==> [isConnected] (📈resetConnection)")
         void resetConnection()
     }, [isConnected]);
 

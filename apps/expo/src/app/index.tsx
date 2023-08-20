@@ -11,11 +11,9 @@ import {
     DrawerItem,
     createDrawerNavigator
 } from '@react-navigation/drawer';
-import { useUser } from '@clerk/clerk-expo';
 import { AntDesign, FontAwesome, FontAwesome5, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useColorScheme } from 'nativewind';
 import NetInfo from '@react-native-community/netinfo';
-import { useAtom } from 'jotai'
 
 import { View, Text } from '../styles/Themed';
 import { PressBtn } from '../styles/PressBtn';
@@ -31,9 +29,9 @@ import DeviceScreen from "../components/Device";
 import PaymentScreen from '../components/Payment';
 import NetworkScreen from "../components/Network";
 import AdminScreen from "../components/Admin";
-import { signMethodAtom } from "../components/Sign-up";
 
-import { profileRoleAtom, profileStateAtom } from "../hooks/useMapConnection";
+import SupabaseAuth from "~/supabase/App";
+
 import usePressIn from '../animations/usePressIn';
 
 const isAdmin = true;
@@ -50,6 +48,7 @@ export type DrawerParamList = {
     "Device": undefined;
     "Service": undefined;
     "Payment": undefined;
+    "Supabase": undefined;
 };
 
 const Drawer = createDrawerNavigator<DrawerParamList>();
@@ -64,13 +63,7 @@ export default function Home() {
         ? (width / 4)
         : isSmallScreen ? 200 : (width / 2)
 
-    const { user, isLoaded, isSignedIn } = useUser();
-
     const { isConnected, isInternetReachable, type: connectionType } = NetInfo.useNetInfo()
-
-    const [profileRole, setProfileRole] = useAtom(profileRoleAtom)
-    const [profileState, setProfileState] = useAtom(profileStateAtom)
-    const [signMethod, setSignMethod] = useAtom(signMethodAtom)
 
     const { colorScheme } = useColorScheme();
 
@@ -78,6 +71,7 @@ export default function Home() {
 
     return (
         <Drawer.Navigator
+            initialRouteName="Map"
             screenOptions={{
 
                 drawerStyle: [{
@@ -146,7 +140,7 @@ export default function Home() {
                             width: '100%',
                         }} pressColor={colorScheme === 'dark' ? 'white' : 'black'} icon={() => {
 
-                            if (!isLoaded) {
+                            if (false) {
                                 return (
                                     <View className={'w-full flex-row justify-start items-center bg-transparent px-5 max-[376px]:px-3 max-[376px]:my-0'}>
                                         <ActivityIndicator
@@ -158,7 +152,7 @@ export default function Home() {
                                 )
                             }
 
-                            if (!isSignedIn) {
+                            if (!false) {
                                 return (
                                     <View className={'w-full flex-row justify-start items-center bg-transparent px-5 max-[376px]:px-3 max-[376px]:my-0'}>
                                         <FontAwesome
@@ -167,9 +161,9 @@ export default function Home() {
                                             color={Colors[colorScheme ?? 'light'].text}
                                         />
                                         <PressBtn onPress={() => {
-                                            navigation.navigate(signMethod !== 'undefined' ? "Sign-In" : "Sign-Up")
+                                            navigation.navigate("Sign-Up")
                                         }} className={`w-[60px] max-w-[120px] ml-5 bg-slate-500 dark:bg-slate-700 rounded h-8 justify-center items-center`} >
-                                            <Text className={`text-white`}>{signMethod !== 'undefined' ? "Sign In" : "Sign Up"}</Text>
+                                            <Text className={`text-white`}>Sign Up</Text>
                                         </PressBtn>
                                     </View>
                                 )
@@ -186,7 +180,7 @@ export default function Home() {
                                             alt="Profile Image"
                                             className={`w-8 h-8 rounded-full`}
                                         />
-                                        <Text className="ml-5">{`${user.firstName} ${user.lastName}`}</Text>
+                                        <Text className="ml-5">{"username"}</Text>
                                     </View>
                                     <View className="absolute items-center justify-center bg-transparent top-0 right-1 flex-row gap-2">
                                         <View style={{
@@ -363,6 +357,25 @@ export default function Home() {
                                         </View>
                                     )
                                 }} label={'Network'} onPress={() => { navigation.navigate('Network') }} />
+
+                                <DrawerItem style={{
+                                    width: '100%',
+                                    marginHorizontal: 0,
+                                    marginVertical: 0,
+                                    borderRadius: 0
+                                }} pressColor={colorScheme === 'dark' ? 'white' : 'black'} icon={() => {
+                                    return (
+                                        <View className={`w-full my-2 flex-row justify-start items-center bg-transparent px-5 max-[376px]:px-3 max-[376px]:my-0`}>
+                                            <MaterialIcons
+                                                name='login'
+                                                size={30}
+                                                color={Colors[colorScheme ?? 'light'].text}
+                                            />
+                                            <Text className="ml-5">Supabase</Text>
+                                        </View>
+                                    )
+                                }} label={'Supabase'} onPress={() => { navigation.navigate('Supabase') }} />
+
                             </>
                         }
 
@@ -376,23 +389,21 @@ export default function Home() {
                             borderRadius: 0
                         }} pressColor={colorScheme === 'dark' ? 'white' : 'black'} icon={() => (
                             <View className="w-full flex-row justify-around items-center bg-transparent">
-                                <PressBtn onPress={() => {
-                                    void setProfileRole('client')
-                                }}  >
+                                <PressBtn>
                                     <AntDesign
                                         name='instagram'
                                         size={25}
                                         color={Colors[colorScheme ?? 'light'].text}
                                     />
-                                </PressBtn><PressBtn onPress={() => {
-                                    void setProfileRole('taxi')
-                                }}  >
+                                </PressBtn>
+                                <PressBtn>
                                     <AntDesign
                                         name='facebook-square'
                                         size={25}
                                         color={Colors[colorScheme ?? 'light'].text}
                                     />
-                                </PressBtn><PressBtn onPress={() => { }}  >
+                                </PressBtn>
+                                <PressBtn>
                                     <AntDesign
                                         name='twitter'
                                         size={25}
@@ -400,12 +411,11 @@ export default function Home() {
                                     />
                                 </PressBtn>
                             </View>
-                        )} label={'Social Networks'} onPress={() => { }} />
+                        )} label={'Social Networks'} onPress={() => { console.log("nothing") }} />
 
                     </DrawerContentScrollView>
                 )
             }}
-            initialRouteName="Map"
         >
 
             <Drawer.Screen name="Sign-In" component={SignIn} />
@@ -418,6 +428,7 @@ export default function Home() {
             <Drawer.Screen name="Device" component={DeviceScreen} />
             <Drawer.Screen name="Service" component={CustomServiceScreen} />
             <Drawer.Screen name="Payment" component={PaymentScreen} />
+            <Drawer.Screen name="Supabase" component={SupabaseAuth} />
 
         </Drawer.Navigator>
     );

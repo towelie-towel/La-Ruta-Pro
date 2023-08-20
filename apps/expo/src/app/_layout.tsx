@@ -4,20 +4,14 @@ import {
   Platform,
 } from 'react-native'
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { ClerkProvider/* , SignedIn, SignedOut, useUser */ } from "@clerk/clerk-expo";
+import { ClerkProvider } from "@clerk/clerk-expo";
 import { Stack } from "expo-router";
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from 'expo-font';
-import { useColorScheme } from "nativewind";
-// import * as NavigationBar from 'expo-navigation-bar';
-// import { useAtom, atom } from 'jotai'
-// import { atomWithStorage, createJSONStorage } from 'jotai/utils'
-// import AsyncStorage from '@react-native-async-storage/async-storage'
-// import NetInfo from '@react-native-community/netinfo';
 
+import { UserProvider } from "~/context/UserContext";
 import { tokenCache } from "../utils/cache";
-import { View } from "~/styles/Themed";
 
 if (Platform.OS === 'android') {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
@@ -29,7 +23,6 @@ void SplashScreen.preventAutoHideAsync();
 
 const RootLayout = () => {
 
-  const { colorScheme } = useColorScheme()
   const [fontsLoaded] = useFonts({
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     'Inter-Regular': require('../../assets/Inter-Regular.otf'),
@@ -52,39 +45,40 @@ const RootLayout = () => {
       tokenCache={tokenCache}
     >
 
-      <SafeAreaProvider onLayout={onLayoutRootView} >
+      <UserProvider>
+        <SafeAreaProvider onLayout={onLayoutRootView} >
 
-        <StatusBar />
-        <Stack
-          screenOptions={{
-            headerShown: false
-          }}
-        >
+          <StatusBar />
+          <Stack
+            screenOptions={{
+              headerShown: false
+            }}
+          >
 
-          <Stack.Screen
-            name="auth/sign-in"
-            options={{
+            <Stack.Screen
+              name="auth/sign-in"
+              options={{
+                /* headerShown: true,
+                headerTintColor: colorScheme === 'dark' ? 'white' : 'black',
+                headerStyle: {
+                  backgroundColor: colorScheme === 'dark' ? 'black' : 'white',
+                }, */
+                presentation: "transparentModal"
+              }}
+            />
+            <Stack.Screen name="auth/sign-up" options={{
               /* headerShown: true,
               headerTintColor: colorScheme === 'dark' ? 'white' : 'black',
               headerStyle: {
                 backgroundColor: colorScheme === 'dark' ? 'black' : 'white',
               }, */
               presentation: "transparentModal"
-            }}
-          />
-          <Stack.Screen name="auth/sign-up" options={{
-            /* headerShown: true,
-            headerTintColor: colorScheme === 'dark' ? 'white' : 'black',
-            headerStyle: {
-              backgroundColor: colorScheme === 'dark' ? 'black' : 'white',
-            }, */
-            presentation: "transparentModal"
-          }} />
+            }} />
 
-        </Stack>
+          </Stack>
 
-      </SafeAreaProvider>
-
+        </SafeAreaProvider>
+      </UserProvider>
     </ClerkProvider>
   );
 };
