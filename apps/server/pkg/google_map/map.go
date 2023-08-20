@@ -1,20 +1,15 @@
-package global
+package google_map
 
 import (
 	"context"
 	"log"
+	"os"
 
 	"googlemaps.github.io/maps"
 )
 
-var MapClient *maps.Client
-
-func init() {
-	var err error
-	MapClient, err = maps.NewClient(maps.WithAPIKey("AIzaSyAtcwUbA0jjJ6ARXl5_FqIqYcGbTI_XZEE"))
-	if err != nil {
-		log.Fatalf("fatal map init error: %s", err)
-	}
+func NewMapClient() (*maps.Client, error) {
+	return maps.NewClient(maps.WithAPIKey(os.Getenv("GOOGLE_MAPS_API_KEY")))
 }
 
 // traditional function

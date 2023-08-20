@@ -8,15 +8,28 @@ import (
 	"os"
 	"os/signal"
 	"time"
+
+	"server/pkg/auth"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	log.SetFlags(0)
 
-	err := run()
+	log.SetFlags(0)
+	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	tc := auth.NewTwilioClient()
+	auth.SendOtp(tc, "+5352953930")
+	auth.CheckOtp(tc, "+5352953930")
+
+	// err := run()
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 }
 
 const defaultAddr = "192.168.1.103:6942"
