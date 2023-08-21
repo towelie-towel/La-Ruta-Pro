@@ -13,8 +13,8 @@ import {
 } from "react-native";
 import { usePathname } from "expo-router";
 
-import { Text, View } from "../styles/Themed";
-import { PressBtn } from "../styles/PressBtn";
+import { Text, View } from "~/components/shared/Themed";
+import { PressBtn } from "~/components/shared/PressBtn";
 
 /* const config = {
     authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',

@@ -15,24 +15,22 @@ import { AntDesign, FontAwesome, FontAwesome5, Ionicons, MaterialIcons } from '@
 import { useColorScheme } from 'nativewind';
 import NetInfo from '@react-native-community/netinfo';
 
-import { View, Text } from '../styles/Themed';
-import { PressBtn } from '../styles/PressBtn';
-import Colors from '../styles/Colors';
+import { View, Text } from '~/components/shared/Themed';
+import { PressBtn } from '~/components/shared/PressBtn';
+import Colors from '~/constants/Colors';
 
-import SignIn from "../components/Sign-in";
-import SignUp from "../components/Sign-up";
-import MapViewScreen from '../components/MapView';
-import HistoryScreen from '../components/History';
-import ConfigScreen from '../components/Config';
-import CustomServiceScreen from '../components/CustomService';
-import DeviceScreen from "../components/Device";
-import PaymentScreen from '../components/Payment';
-import NetworkScreen from "../components/Network";
-import AdminScreen from "../components/Admin";
+import SignIn from "~/components/screens/Sign-in";
+import SignUp from "~/components/screens/Sign-up";
+import MapViewScreen from '~/components/screens/MapView';
+import HistoryScreen from '~/components/screens/History';
+import ConfigScreen from '~/components/screens/Config';
+import CustomServiceScreen from '~/components/screens/CustomService';
+import DeviceScreen from "~/components/screens/Device";
+import PaymentScreen from '~/components/screens/Payment';
+import NetworkScreen from "~/components/screens/Network";
+import AdminScreen from "~/components/screens/Admin";
 
-import SupabaseAuth from "~/supabase/App";
-
-import usePressIn from '../animations/usePressIn';
+import usePressIn from '~/hooks/animations/usePressIn';
 
 const isAdmin = true;
 
@@ -48,7 +46,6 @@ export type DrawerParamList = {
     "Device": undefined;
     "Service": undefined;
     "Payment": undefined;
-    "Supabase": undefined;
 };
 
 const Drawer = createDrawerNavigator<DrawerParamList>();
@@ -358,24 +355,6 @@ export default function Home() {
                                     )
                                 }} label={'Network'} onPress={() => { navigation.navigate('Network') }} />
 
-                                <DrawerItem style={{
-                                    width: '100%',
-                                    marginHorizontal: 0,
-                                    marginVertical: 0,
-                                    borderRadius: 0
-                                }} pressColor={colorScheme === 'dark' ? 'white' : 'black'} icon={() => {
-                                    return (
-                                        <View className={`w-full my-2 flex-row justify-start items-center bg-transparent px-5 max-[376px]:px-3 max-[376px]:my-0`}>
-                                            <MaterialIcons
-                                                name='login'
-                                                size={30}
-                                                color={Colors[colorScheme ?? 'light'].text}
-                                            />
-                                            <Text className="ml-5">Supabase</Text>
-                                        </View>
-                                    )
-                                }} label={'Supabase'} onPress={() => { navigation.navigate('Supabase') }} />
-
                             </>
                         }
 
@@ -428,7 +407,6 @@ export default function Home() {
             <Drawer.Screen name="Device" component={DeviceScreen} />
             <Drawer.Screen name="Service" component={CustomServiceScreen} />
             <Drawer.Screen name="Payment" component={PaymentScreen} />
-            <Drawer.Screen name="Supabase" component={SupabaseAuth} />
 
         </Drawer.Navigator>
     );

@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text } from '../styles/Themed';
-import { PressBtn } from '../styles/PressBtn';
+
+import { View, Text } from '~/components/shared/Themed';
+import { PressBtn } from '~/components/shared/PressBtn';
 
 export default function StackComponent() {
 

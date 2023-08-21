@@ -6,9 +6,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { atomWithStorage, createJSONStorage, } from 'jotai/utils';
 import { useAtom, } from 'jotai';
 
-import { View, Text } from '../styles/Themed';
-import Colors from '../styles/Colors';
-import { PressBtn } from '../styles/PressBtn';
+import { View, Text } from '~/components/shared/Themed';
+import { PressBtn } from '~/components/shared/PressBtn';
+
+import Colors from '~/constants/Colors';
 
 const storedUserMarkers = createJSONStorage<UserMarkerIconType[]>(() => AsyncStorage)
 export const userMarkersAtom = atomWithStorage<UserMarkerIconType[]>('userMarkers', [], storedUserMarkers)

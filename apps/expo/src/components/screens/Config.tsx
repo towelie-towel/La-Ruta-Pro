@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View } from '../styles/Themed';
+import { Text, View } from '~/components/shared/Themed';
 
 export default function ConfigScreen() {
     return (

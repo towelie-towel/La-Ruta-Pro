@@ -2,8 +2,8 @@ import React, { memo } from 'react'
 import { Marker } from 'react-native-maps';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { type UserMarkerIconType } from './SelectMarkerIcon';
-import Colors from '../styles/Colors';
+import { type UserMarkerIconType } from '~/components/map/SelectMarkerIcon';
+import Colors from '~/constants/Colors';
 
 const UserMarkerIcon: React.FC<UserMarkerIconType & { colorScheme: 'light' | 'dark' }> = ({ coords, icon, id, name, description, colorScheme }) => {
     return (

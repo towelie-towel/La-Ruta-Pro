@@ -12,20 +12,20 @@ import { useKeepAwake } from 'expo-keep-awake';
 import { useColorScheme } from 'nativewind';
 import NetInfo from '@react-native-community/netinfo';
 
-import useMapConnection from '../hooks/useMapConnection';
-// import { type MarkerData } from '../constants/Markers';
+import useMapConnection from '~/hooks/useMapConnection';
+// import { type MarkerData } from '~/constants/Markers';
 
-import { View } from '../styles/Themed';
-import { NightMap } from '../styles/NightMap';
-import UserMarker from '../markers/UserMarker';
-// import CarMarker from '../markers/CarMarker';
+import { View } from '~/components/shared/Themed';
+import { NightMap } from '~/constants/NightMap';
+import UserMarker from '~/components/map/UserMarker';
+// import CarMarker from '~/components/map/CarMarker';
 
-import { type UserMarkerIconType, userMarkersAtom } from './SelectMarkerIcon';
-import UserMarkerIcon from './UserMarkerIcon';
-import SelectMarkerIcon from './SelectMarkerIcon';
-import AnimatedRouteMarker from './AnimatedRouteMarker';
-import BottomSheet from './BottomSheeetModal';
-import NavigationMenu from './NavigationMenu';
+import { type UserMarkerIconType, userMarkersAtom } from '~/components/map/SelectMarkerIcon';
+import UserMarkerIcon from '~/components/map/UserMarkerIcon';
+import SelectMarkerIcon from '~/components/map/SelectMarkerIcon';
+import AnimatedRouteMarker from '~/components/map/AnimatedRouteMarker';
+import BottomSheet from '~/components/containers/BottomSheeetModal';
+import NavigationMenu from '~/components/containers/NavigationMenu';
 
 const MapViewComponent = () => {
 

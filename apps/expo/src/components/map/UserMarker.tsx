@@ -5,8 +5,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useColorScheme } from 'nativewind'
 
 import { positionAtom, headingAtom } from '~/hooks/useMapConnection'
-import AnimatedMarker from '~/components/AnimatedMarker'
-import Colors from '~/styles/Colors';
+import AnimatedMarker from '~/components/map/AnimatedMarker'
+import Colors from '~/constants/Colors';
 
 const UserMarker = ({ description, title, userId, ...props }: { description: string, title: string, userId: string } & Omit<MapMarkerProps, "coordinate">) => {
     const { colorScheme } = useColorScheme();

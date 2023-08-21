@@ -8,8 +8,8 @@ import {
 import { useColorScheme } from 'nativewind';
 import { MaterialIcons } from '@expo/vector-icons';
 
-import { PressBtn } from '../styles/PressBtn';
-import Colors from '../styles/Colors';
+import { PressBtn } from '~/components/shared/PressBtn';
+import Colors from '~/constants/Colors';
 
 interface NavigationMenuParams {
     navigationAnimValue: Animated.Value,

@@ -4,11 +4,12 @@ import {
     Animated,
     TouchableWithoutFeedback
 } from 'react-native';
-import { Text } from '../styles/Themed';
-import { Feather } from '@expo/vector-icons';
-import Colors from '../styles/Colors';
 import { useColorScheme } from 'nativewind';
 import { useAuth } from '@clerk/clerk-expo';
+import { Feather } from '@expo/vector-icons';
+
+import { Text } from '~/components/shared/Themed';
+import Colors from '~/constants/Colors';
 
 const ProfileDropdown = () => {
     const dropdownVisible = useRef(new Animated.Value(0)).current;
@@ -67,10 +68,10 @@ const ProfileDropdown = () => {
                             },
                         ]}
                     >
-                        <Pressable onPress={() => {  }}>
+                        <Pressable onPress={() => { }}>
                             <Text className='text-sm '>Cambiar Imagen</Text>
                         </Pressable>
-                        <Pressable onPress={() => {  }}>
+                        <Pressable onPress={() => { }}>
                             <Text className='text-sm '>Cambiar Nombre</Text>
                         </Pressable>
                         <Pressable onPress={() => {

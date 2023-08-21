@@ -12,10 +12,22 @@ import { BlurView } from 'expo-blur';
 import {
     Text,
     View
-} from '../styles/Themed';
-import Colors from '../styles/Colors';
+} from '~/components/shared/Themed';
+import Colors from '~/constants/Colors';
 
-const LayoutDropdown = () => {
+interface Action {
+    callback: () => void;
+    icon?: string;
+    title?: string;
+    color?: string;
+    backgroundColor?: string;
+    disabled?: boolean;
+    loading?: boolean;
+    loadingColor?: string;
+    loadingBackgroundColor?: string;
+}
+
+const AbsoluteDropdown = ({ actions }: { actions: Action[] }) => {
     const [isOpen, setIsOpen] = useState(false);
     const { colorScheme } = useColorScheme();
     const { isLoaded, signOut } = useAuth();
@@ -155,27 +167,20 @@ const LayoutDropdown = () => {
                     />
                 }
 
-                {isOpen &&
-                    <>
-                        <Pressable onPress={() => { handleOpenLoading() }}>
-                            <Text className='text-sm '>Open Loading</Text>
-                        </Pressable>
-                        <Pressable onPress={() => { handleCloseLoading() }}>
-
-                            <Text className='text-sm'>Close Loading</Text>
-                        </Pressable>
-                        <Pressable
-                            onPress={handleSignOut}
-                            className='w-full flex-row justify-start items-center pl-2'
-                        >
-                            <MaterialIcons
-                                name='close'
-                                size={16}
-                                color={Colors[colorScheme ?? 'light'].text}
-                            />
-                            <Text className='text-sm ml-2 text-red-600'>Cerrar Sesión</Text>
-                        </Pressable>
-                    </>
+                {isOpen && actions.map((action) => (
+                    <Pressable
+                        key={action.title}
+                        onPress={action.callback}
+                        className='w-full flex-row justify-start items-center pl-2'
+                    >
+                        <MaterialIcons
+                            name='close'
+                            size={16}
+                            color={Colors[colorScheme ?? 'light'].text}
+                        />
+                        <Text className='text-sm ml-2 text-red-600'>Cerrar Sesión</Text>
+                    </Pressable>
+                ))
                 }
 
             </Pressable>
@@ -190,4 +195,4 @@ const LayoutDropdown = () => {
 };
 
 
-export default LayoutDropdown;
+export default AbsoluteDropdown;

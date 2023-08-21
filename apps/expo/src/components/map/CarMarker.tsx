@@ -5,13 +5,13 @@ import React, { memo, useEffect, useRef } from 'react'
 import { type MapMarkerProps, MarkerAnimated } from 'react-native-maps'
 import { Image } from 'expo-image'
 
-import { View } from '../styles/Themed'
-import { type MarkerData } from '../constants/Markers'
+import { View } from '~/components/shared/Themed'
+import { type MarkerData } from '~/constants/Markers'
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import BlackCarSVG from '../../assets/svgs/BlackCar.svg'
-import BlackCarTSX from '../components/BlackCarSVG'
+import BlackCarSVG from '~/assets/svgs/BlackCar.svg'
+import BlackCarTSX from '~/components/svgs/BlackCarSVG'
 
 type TaxiCategories = 'basic' | 'confort' | 'xl'
 

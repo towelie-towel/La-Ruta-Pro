@@ -3,9 +3,9 @@ import { type LatLng } from 'react-native-maps';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useColorScheme } from 'nativewind';
 
-import { getDirections } from '../utils/helpers';
-import AnimatedMarker from './AnimatedMarker';
-import Colors from '~/styles/Colors';
+import { getDirections } from '~/utils/helpers';
+import Colors from '~/constants/Colors';
+import AnimatedMarker from '~/components/map/AnimatedMarker';
 
 const AnimatedRouteMarker = () => {
 

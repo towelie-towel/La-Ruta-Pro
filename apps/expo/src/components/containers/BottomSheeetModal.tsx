@@ -9,22 +9,23 @@ import {
 } from "react-native";
 import {
 } from '@react-navigation/drawer';
+import { Link } from 'expo-router';
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useAtom, } from 'jotai';
-import { useUser } from '@clerk/clerk-expo';
+// import { useUser } from '@clerk/clerk-expo';
 import { useColorScheme } from 'nativewind';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import { type BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 
-import { View, Text } from '../styles/Themed';
-import { PressBtn } from '../styles/PressBtn';
-import Colors from '../styles/Colors';
+import { useUser } from '~/context/UserContext';
+import { View, Text } from '~/components/shared/Themed';
+import { PressBtn } from '~/components/shared/PressBtn';
+import Colors from '~/constants/Colors';
 
-import { userMarkersAtom } from './SelectMarkerIcon';
-import LayoutDropdown from './LayoutDropdown';
-import { signMethodAtom } from './Sign-up';
-import { Link } from 'expo-router';
+import { userMarkersAtom } from '~/components/map/SelectMarkerIcon';
+import AbsoluteDropdown from '~/components/shared/AbsoluteDropdown';
+import { signMethodAtom } from '~/components/screens/Sign-up';
 
 void Image.prefetch("https://lh3.googleusercontent.com/a/AAcHTtfPgVic8qF8hDw_WPE80JpGOkKASohxkUA8y272Ow=s1000-c")
 
@@ -95,7 +96,7 @@ const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, s
 }) => {
 
     const { colorScheme } = useColorScheme();
-    const { user, isLoaded, isSignedIn } = useUser()
+    const { user, isLoaded, isSignedIn, error, isError, isloading, session } = useUser()
     const { width } = Dimensions.get('window');
 
     const [signMethod, setSignMethod] = useAtom(signMethodAtom);
@@ -176,7 +177,7 @@ const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, s
                             resizeMode="cover"
                         />
 
-                        <LayoutDropdown />
+                        <AbsoluteDropdown actions={[]} />
 
                         <View className={'absolute left-5 top-40 min-[768px]:top-64 border-2 border-solid border-white dark:border-black w-16 h-16 rounded-full overflow-hidden'}>
                             <Animated.Image
@@ -191,10 +192,10 @@ const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, s
                         <View className={'w-full h-20 justify-between flex-row bg-transparent'}>
                             <View className='bg-transparent h-full justify-end ml-5'>
                                 <View className='bg-transparent'>
-                                    <Text className='font-bold text-lg'>{`${user.firstName} ${user.lastName}`}</Text>
+                                    <Text className='font-bold text-lg'>{`${user?.userName}`}</Text>
                                 </View>
                                 <View className='bg-transparent'>
-                                    <Text className='font-medium text-sm text-slate-700 dark:text-slate-100'>@{`${user.username}`}</Text>
+                                    <Text className='font-medium text-sm text-slate-700 dark:text-slate-100'>@{`${user?.slug}`}</Text>
                                 </View>
                             </View>
                             <PressBtn onPress={() => { return }}>

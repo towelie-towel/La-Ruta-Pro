@@ -7,7 +7,7 @@ import { atomWithStorage, createJSONStorage } from 'jotai/utils'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import NetInfo from '@react-native-community/netinfo';
 
-import { type MarkerData, initialMarkers } from '../constants/Markers';
+import { type MarkerData, initialMarkers } from '~/constants/Markers';
 
 export const markersAtom = atom<MarkerData[]>(initialMarkers)
 

@@ -18,6 +18,7 @@ interface User {
     userName: string,
     email: string,
     phone: string,
+    slug: string,
 }
 
 const initialValue: UserContext = {
@@ -91,3 +92,68 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         </UserContext.Provider>
     )
 }
+
+/* 
+async function getProfile() {
+        try {
+            setLoading(true)
+            if (!session?.user) throw new Error('No user on the session!')
+
+            const { data, error, status } = await supabase
+                .from('profiles')
+                .select(`username, website, avatar_url`)
+                .eq('id', session?.user.id)
+                .single()
+            if (error && status !== 406) {
+                throw error
+            }
+
+            if (data) {
+                setUsername(data.username)
+                setWebsite(data.website)
+                setAvatarUrl(data.avatar_url)
+            }
+        } catch (error) {
+            if (error instanceof Error) {
+                Alert.alert(error.message)
+            }
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    async function updateProfile({
+        username,
+        website,
+        avatar_url,
+    }: {
+        username: string
+        website: string
+        avatar_url: string
+    }) {
+        try {
+            setLoading(true)
+            if (!session?.user) throw new Error('No user on the session!')
+
+            const updates = {
+                id: session?.user.id,
+                username,
+                website,
+                avatar_url,
+                updated_at: new Date(),
+            }
+
+            const { error } = await supabase.from('profiles').upsert(updates)
+
+            if (error) {
+                throw error
+            }
+        } catch (error) {
+            if (error instanceof Error) {
+                Alert.alert(error.message)
+            }
+        } finally {
+            setLoading(false)
+        }
+    }
+*/

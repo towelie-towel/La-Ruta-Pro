@@ -1,6 +1,7 @@
 import React from 'react';
 import { Dimensions } from 'react-native';
-import { Text, View } from '../styles/Themed';
+
+import { Text, View } from '~/components/shared/Themed';
 
 export default function DeviceScreen() {
 

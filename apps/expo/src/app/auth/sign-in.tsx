@@ -2,8 +2,8 @@ import React from 'react'
 import { Pressable, TouchableWithoutFeedback } from 'react-native'
 import { useRouter } from 'expo-router'
 
-import SignIn from '~/components/Sign-in'
-import { View } from '~/styles/Themed'
+import SignIn from '~/components/screens/Sign-in'
+import { View } from '~/components/shared/Themed'
 
 const SignInRoute = () => {
     const { back } = useRouter()

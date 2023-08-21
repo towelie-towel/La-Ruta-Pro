@@ -1,7 +1,7 @@
 import React from 'react';
-import { Text, View } from '../styles/Themed';
-
 import NetInfo from '@react-native-community/netinfo';
+
+import { Text, View } from '~/components/shared/Themed';
 
 export default function NetworkScreen() {
     const { details, isConnected, isInternetReachable, type } = NetInfo.useNetInfo()

@@ -11,7 +11,7 @@ import { StatusBar } from "expo-status-bar";
 import { useFonts } from 'expo-font';
 
 import { UserProvider } from "~/context/UserContext";
-import { tokenCache } from "../utils/cache";
+import { tokenCache } from "~/utils/cache";
 
 if (Platform.OS === 'android') {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call

@@ -13,11 +13,11 @@ import { Image } from 'expo-image';
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { atomWithStorage, createJSONStorage } from 'jotai/utils'
 
-import { supabase } from '../lib/supabase'
-import { type DrawerParamList } from '../app';
-import { View } from '../styles/Themed';
-import { PressBtn } from '../styles/PressBtn';
-import Colors from '../styles/Colors';
+import { supabase } from '~/lib/supabase'
+import { type DrawerParamList } from '~/app';
+import { View } from '~/components/shared/Themed';
+import { PressBtn } from '~/components/shared/PressBtn';
+import Colors from '~/constants/Colors';
 import { isValidPassword, isValidPhone, isValidUserName } from '~/utils/auth';
 
 const storedSignMethod = createJSONStorage<'oauth' | 'password' | 'undefined'>(() => AsyncStorage)
@@ -149,7 +149,7 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
 
             <View className='w-1/2 items-center justify-center font-[Inter-Regular]'>
                 <Image
-                    source={require('../../assets/Logo.png')}
+                    source={require('../../../assets/Logo.png')}
                     alt='Tu-Ruta Logo'
                     className='h-16 w-14 max-[367px]:h-12 max-[367px]:w-12 max-[340px]:h-12 max-[340px]:w-10 max-[367px]:my-0'
                 />

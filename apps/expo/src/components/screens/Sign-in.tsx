@@ -8,11 +8,11 @@ import { Image } from 'expo-image';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useColorScheme } from "nativewind";
 
-import { supabase } from '../lib/supabase'
-import { type DrawerParamList } from '../app';
-import { PressBtn } from '../styles/PressBtn';
-import { View, Text } from '../styles/Themed';
-import Colors from '../styles/Colors';
+import { supabase } from '~/lib/supabase'
+import { type DrawerParamList } from '~/app';
+import { PressBtn } from '~/components/shared/PressBtn';
+import { View, Text } from '~/components/shared/Themed';
+import Colors from '~/constants/Colors';
 
 export default function SignIn({ navigation }: { navigation?: DrawerNavigationProp<DrawerParamList> }) {
 
@@ -29,13 +29,6 @@ export default function SignIn({ navigation }: { navigation?: DrawerNavigationPr
     const [isLoading, setIsLoading] = useState(false);
     const [isReduced, setIsReduced] = useState(false)
 
-    useEffect(() => {
-        console.log("open Sign-in")
-        return () => {
-            console.log("closing Sign-in")
-        }
-    }, [])
-
     const reduceLogo = () => {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
         setIsReduced(true)
@@ -45,7 +38,7 @@ export default function SignIn({ navigation }: { navigation?: DrawerNavigationPr
 
         const { error } = await supabase.auth.signInWithPassword({
             phone: '+53' + phoneNumber.trim(),
-            password: "some-password"
+            password
         })
         if (error) {
             console.error(JSON.stringify(error, null, 2))
@@ -69,7 +62,7 @@ export default function SignIn({ navigation }: { navigation?: DrawerNavigationPr
             >
                 <Text numberOfLines={2} adjustsFontSizeToFit className='font-bold text-3xl text-center max-[367px]:text-2xl'>Bienvenido Otra Vez</Text>
                 <Image
-                    source={require('../../assets/Logo.png')}
+                    source={require('../../../assets/Logo.png')}
                     alt='Tu-Ruta Logo'
                     className='h-16 w-14 max-[367px]:h-12 max-[367px]:w-12 max-[340px]:h-12 max-[340px]:w-10 mt-4 max-[367px]:my-0'
                 />
