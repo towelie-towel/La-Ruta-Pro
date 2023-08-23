@@ -31,6 +31,7 @@ import NetworkScreen from "~/components/screens/Network";
 import AdminScreen from "~/components/screens/Admin";
 
 import usePressIn from '~/hooks/animations/usePressIn';
+import { useUser } from "~/context/UserContext";
 
 const isAdmin = true;
 
@@ -61,10 +62,11 @@ export default function Home() {
         : isSmallScreen ? 200 : (width / 2)
 
     const { isConnected, isInternetReachable, type: connectionType } = NetInfo.useNetInfo()
-
     const { colorScheme } = useColorScheme();
 
-    const { animatedValue: pressMenuAnim, handlePressIn: pressInMenu, handlePressOut: pressOutMenu, isPressed: isMenuPressed } = usePressIn()
+    const { animatedValue: pressMenuAnim, handlePressIn: pressInMenu, handlePressOut: pressOutMenu } = usePressIn()
+
+    const { session, user } = useUser()
 
     return (
         <Drawer.Navigator
@@ -368,7 +370,9 @@ export default function Home() {
                             borderRadius: 0
                         }} pressColor={colorScheme === 'dark' ? 'white' : 'black'} icon={() => (
                             <View className="w-full flex-row justify-around items-center bg-transparent">
-                                <PressBtn>
+                                <PressBtn onPress={() => {
+                                    console.log(JSON.stringify({ session, user }, null, 2))
+                                }}>
                                     <AntDesign
                                         name='instagram'
                                         size={25}

@@ -38,18 +38,22 @@ export const isValidPassword = (password: string): [boolean, string] => {
     return [true, ""];
 }
 
-export const isValidUserName = (userName: string): [boolean, string] => {
+export const isValidUsername = (username: string): [boolean, string] => {
     let error = '';
 
-    if (userName.length < 3) {
+    if (username.length < 3) {
         error = 'Su nombre de usuario debe tener al menos 3 caracteres 😐'
         return [false, error];
     }
 
-    if (userName.length > 20) {
+    if (username.length > 20) {
         error = 'Su nombre de usuario no debe tener más de 20 caracteres 😐'
         return [false, error];
     }
 
     return [true, ""];
+}
+
+export const usernameToSlug = (username: string) => {
+    return username.toLowerCase().replace(/ /g, '-');
 }

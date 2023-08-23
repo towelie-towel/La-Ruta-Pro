@@ -26,6 +26,7 @@ import Colors from '~/constants/Colors';
 import { userMarkersAtom } from '~/components/map/SelectMarkerIcon';
 import AbsoluteDropdown from '~/components/shared/AbsoluteDropdown';
 import { signMethodAtom } from '~/components/screens/Sign-up';
+import AbsoluteLoading from '../shared/AbsoluteLoading';
 
 void Image.prefetch("https://lh3.googleusercontent.com/a/AAcHTtfPgVic8qF8hDw_WPE80JpGOkKASohxkUA8y272Ow=s1000-c")
 
@@ -96,7 +97,7 @@ const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, s
 }) => {
 
     const { colorScheme } = useColorScheme();
-    const { user, isLoaded, isSignedIn, error, isError, isloading, session } = useUser()
+    const { user, signOut, session, isLoading, isLoaded, isSignedIn, error, isError } = useUser()
     const { width } = Dimensions.get('window');
 
     const [signMethod, setSignMethod] = useAtom(signMethodAtom);
@@ -177,7 +178,26 @@ const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, s
                             resizeMode="cover"
                         />
 
-                        <AbsoluteDropdown actions={[]} />
+                        <AbsoluteDropdown actions={[
+                            {
+                                title: 'Opción 1',
+                                onPress: () => {
+                                    console.log("Opción 1")
+                                }
+                            },
+                            {
+                                title: 'Opción 2',
+                                onPress: () => {
+                                    console.log("Opción 2")
+                                }
+                            },
+                            {
+                                title: 'Cerrar sesión',
+                                onPress: () => {
+                                    void signOut()
+                                }
+                            }
+                        ]} />
 
                         <View className={'absolute left-5 top-40 min-[768px]:top-64 border-2 border-solid border-white dark:border-black w-16 h-16 rounded-full overflow-hidden'}>
                             <Animated.Image
@@ -192,13 +212,13 @@ const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, s
                         <View className={'w-full h-20 justify-between flex-row bg-transparent'}>
                             <View className='bg-transparent h-full justify-end ml-5'>
                                 <View className='bg-transparent'>
-                                    <Text className='font-bold text-lg'>{`${user?.userName}`}</Text>
+                                    <Text className='font-bold text-lg'>{`${user?.username}`}</Text>
                                 </View>
                                 <View className='bg-transparent'>
                                     <Text className='font-medium text-sm text-slate-700 dark:text-slate-100'>@{`${user?.slug}`}</Text>
                                 </View>
                             </View>
-                            <PressBtn onPress={() => { return }}>
+                            <PressBtn onPress={() => { console.log("🙈🙉 user info: ", JSON.stringify({ user, isLoaded, isSignedIn, error, isError, isLoading, session }, null, 2)) }}>
                                 <View className='h-10 px-2 mt-3 mr-5 flex-row justify-center items-center rounded-2xl border-zinc-400 dark:border-zinc-800 border-[1.5px]'>
                                     <MaterialIcons
                                         name='edit'
@@ -269,6 +289,9 @@ const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, s
                         }
                     </View>
                 }
+
+                <AbsoluteLoading size={'large'} visible={isLoading} />
+
             </View>
         </BottomSheetModal>
     );

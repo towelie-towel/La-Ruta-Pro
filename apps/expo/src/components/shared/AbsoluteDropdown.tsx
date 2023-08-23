@@ -6,7 +6,6 @@ import {
 } from 'react-native';
 import { useColorScheme } from 'nativewind';
 import { Feather, MaterialIcons } from '@expo/vector-icons';
-import { useAuth } from '@clerk/clerk-expo';
 import { BlurView } from 'expo-blur';
 
 import {
@@ -14,9 +13,10 @@ import {
     View
 } from '~/components/shared/Themed';
 import Colors from '~/constants/Colors';
+import AbsoluteLoading from './AbsoluteLoading';
 
 interface Action {
-    callback: () => void;
+    onPress: () => void;
     icon?: string;
     title?: string;
     color?: string;
@@ -30,26 +30,11 @@ interface Action {
 const AbsoluteDropdown = ({ actions }: { actions: Action[] }) => {
     const [isOpen, setIsOpen] = useState(false);
     const { colorScheme } = useColorScheme();
-    const { isLoaded, signOut } = useAuth();
 
     const [isLoading, setIsLoading] = useState(false)
 
     const [width, setWidth] = useState(32);
     const [height, setHeight] = useState(32);
-
-    const handleSignOut = async () => {
-        handleOpenLoading()
-        if (isLoaded) {
-            console.log("closing session")
-            try {
-                await signOut()
-            } catch (error) {
-                console.error(error)
-            }
-            console.log("session closed")
-        }
-        handleCloseLoading()
-    }
 
     const handleOpenDropdown = () => {
         LayoutAnimation.configureNext({
@@ -85,68 +70,8 @@ const AbsoluteDropdown = ({ actions }: { actions: Action[] }) => {
         setIsOpen(false)
     };
 
-    const handleOpenLoading = () => {
-        LayoutAnimation.configureNext({
-            duration: 300,
-            update: {
-                type: 'easeInEaseOut',
-                property: 'opacity',
-            },
-            create: {
-                type: 'easeInEaseOut',
-                property: 'opacity',
-            },
-            delete: {
-                type: 'easeInEaseOut',
-                property: 'opacity',
-            },
-        })
-        setIsLoading(true)
-    };
-
-    const handleCloseLoading = () => {
-        LayoutAnimation.configureNext({
-            duration: 200,
-            update: {
-                type: 'easeInEaseOut',
-                property: 'opacity',
-            },
-            create: {
-                type: 'easeInEaseOut',
-                property: 'opacity',
-            },
-            delete: {
-                type: 'easeInEaseOut',
-                property: 'opacity',
-            },
-        })
-        setIsLoading(false)
-    };
-
     return (
         <>
-
-            <BlurView
-                style={{
-                    display: isLoading ? 'flex' : 'none',
-                }}
-                className='w-full h-full justify-center items-center absolute z-40'
-                intensity={10}
-            >
-                {isLoading &&
-                    <View className='absolute top-10 mx-auto bg-transparent z-50'>
-                        <ActivityIndicator
-                            size={'large'}
-                            animating
-                            color={colorScheme === 'light' ? 'black' : 'white'}
-                        />
-                        {/* <PressBtn onPress={() => { handleCloseLoading() }} className={'w-[200px] max-[367px]:w-[180px] max-w-[280px] bg-[#FCCB6F] mt-4 dark:bg-white rounded-3xl h-12 max-[367px]:h-8 flex-row justify-center items-center'} >
-                            <Text darkColor="black" className={'text-white dark:text-black font-bold text-lg max-[367px]:text-base mr-3'}>Cancelar</Text>
-                        </PressBtn> */}
-                    </View>
-                }
-            </BlurView>
-
             <Pressable
                 onPress={handleOpenDropdown}
                 className='absolute justify-center items-center right-5 top-5 z-30'
@@ -170,7 +95,7 @@ const AbsoluteDropdown = ({ actions }: { actions: Action[] }) => {
                 {isOpen && actions.map((action) => (
                     <Pressable
                         key={action.title}
-                        onPress={action.callback}
+                        onPress={() => { action.onPress(); }}
                         className='w-full flex-row justify-start items-center pl-2'
                     >
                         <MaterialIcons

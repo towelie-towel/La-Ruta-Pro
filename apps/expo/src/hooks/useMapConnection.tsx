@@ -103,7 +103,7 @@ const useMapConnection = () => {
         const role = profileRoleRef.current;
         const protocol = `map-${role}`;
 
-        console.log("☢️ asyncNewWebSocket ==> websuckItToMeBBy ", protocol)
+        console.log("🌊 asyncNewWebSocket ==> websuckItToMeBBy ", protocol)
         const suckItToMeBBy = new WebSocket(`ws://192.168.1.103:6942/subscribe?id=6ec0bd7f-11c0-43da-975e-2a8ad9eba&lat=51.5073509&lon=-0.1277581999999997`, protocol);
 
         // TODO: stream depending the role

@@ -18,7 +18,7 @@ import { type DrawerParamList } from '~/app';
 import { View } from '~/components/shared/Themed';
 import { PressBtn } from '~/components/shared/PressBtn';
 import Colors from '~/constants/Colors';
-import { isValidPassword, isValidPhone, isValidUserName } from '~/utils/auth';
+import { isValidPassword, isValidPhone, isValidUsername, usernameToSlug } from '~/utils/auth';
 
 const storedSignMethod = createJSONStorage<'oauth' | 'password' | 'undefined'>(() => AsyncStorage)
 export const signMethodAtom = atomWithStorage<'oauth' | 'password' | 'undefined'>('signMethod', 'undefined', storedSignMethod)
@@ -40,8 +40,8 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
     const [password, setPassword] = useState('')
     const [passwordError, setPasswordError] = useState('')
 
-    const [userName, setUserName] = useState('')
-    const [userNameError, setUserNameError] = useState('')
+    const [username, setUsername] = useState('')
+    const [usernameError, setUsernameError] = useState('')
 
     const [otpTimer, setOtpTimer] = useState(60);
 
@@ -50,12 +50,6 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
 
     const [isReduced, setIsReduced] = useState(false)
 
-    useEffect(() => {
-        console.log("open Sign-up")
-        return () => {
-            console.log("closing Sign-up")
-        }
-    }, [])
 
     const reduceLogo = () => {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
@@ -81,9 +75,10 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
         setIsLoading(true);
         const [phoneOk, phoneErr] = isValidPhone(phoneNumber.trim())
         const [passwordOk, passwordErr] = isValidPassword(password)
-        const [userNameOk, userNameErr] = isValidUserName(userName)
+        const [usernameOk, usernameErr] = isValidUsername(username)
+        const slug = usernameToSlug(username)
 
-        if (!phoneOk || !passwordOk || !userNameOk) {
+        if (!phoneOk || !passwordOk || !usernameOk) {
             if (!phoneOk) {
                 setPhoneError(phoneErr)
                 console.error(JSON.stringify("invalid phone: " + phoneErr, null, 2))
@@ -92,9 +87,9 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
                 setPasswordError(passwordErr)
                 console.error(JSON.stringify("invalid password: " + passwordErr, null, 2))
             }
-            if (!userNameOk) {
-                setUserNameError(userNameErr)
-                console.error(JSON.stringify("invalid userName: " + userNameErr, null, 2))
+            if (!usernameOk) {
+                setUsernameError(usernameErr)
+                console.error(JSON.stringify("invalid username: " + usernameErr, null, 2))
             }
             setIsLoading(false)
             return
@@ -106,7 +101,7 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
             password: password,
             options: {
                 data: {
-                    username: userName,
+                    username: username,
                 }
             }
         })
@@ -194,15 +189,15 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
                             placeholder="Nombre de Usuario"
                             autoCapitalize="none"
                             placeholderTextColor={colorScheme === 'dark' ? "rgb(107 114 128)" : "rgb(100 116 139)"}
-                            onChangeText={setUserName}
-                            value={userName}
+                            onChangeText={setUsername}
+                            value={username}
 
                             onFocus={() => {
                                 reduceLogo()
                             }}
                         />
                         {
-                            userNameError &&
+                            usernameError &&
                             <View className='absolute right-2 my-auto'>
                                 <MaterialIcons
                                     name='error'
