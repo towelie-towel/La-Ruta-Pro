@@ -18,9 +18,10 @@ type Params = {
     onCancel?: () => void,
     size?: number | 'small' | 'large',
     visible: boolean,
+    intensity?: number,
 } & ViewProps
 
-const AbsoluteLoading = ({ onCancel, size, visible, style, ...restProps }: Params) => {
+const AbsoluteLoading = ({ onCancel, size, visible, intensity = 5, style, ...restProps }: Params) => {
     const { colorScheme } = useColorScheme()
     const [open, setOpen] = useState(visible)
 
@@ -70,7 +71,7 @@ const AbsoluteLoading = ({ onCancel, size, visible, style, ...restProps }: Param
             }, style]}
             {...restProps}
             className='w-full h-full justify-center items-center absolute z-40'
-            intensity={5}
+            intensity={intensity}
         >
             {open && <View className='absolute top-10 mx-auto bg-transparent z-50'>
                 <ActivityIndicator

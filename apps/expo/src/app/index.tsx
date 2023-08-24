@@ -14,6 +14,7 @@ import {
 import { AntDesign, FontAwesome, FontAwesome5, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useColorScheme } from 'nativewind';
 import NetInfo from '@react-native-community/netinfo';
+import { useAtom, } from 'jotai';
 
 import { View, Text } from '~/components/shared/Themed';
 import { PressBtn } from '~/components/shared/PressBtn';
@@ -31,7 +32,7 @@ import NetworkScreen from "~/components/screens/Network";
 import AdminScreen from "~/components/screens/Admin";
 
 import usePressIn from '~/hooks/animations/usePressIn';
-import { useUser } from "~/context/UserContext";
+import { useUser, isFirstTimeAtom } from "~/context/UserContext";
 
 const isAdmin = true;
 
@@ -65,8 +66,9 @@ export default function Home() {
     const { colorScheme } = useColorScheme();
 
     const { animatedValue: pressMenuAnim, handlePressIn: pressInMenu, handlePressOut: pressOutMenu } = usePressIn()
+    const [isFirstTime, _] = useAtom(isFirstTimeAtom);
 
-    const { session, user } = useUser()
+    const { session, user, isSignedIn, isLoading } = useUser()
 
     return (
         <Drawer.Navigator
@@ -139,7 +141,7 @@ export default function Home() {
                             width: '100%',
                         }} pressColor={colorScheme === 'dark' ? 'white' : 'black'} icon={() => {
 
-                            if (false) {
+                            if (isLoading) {
                                 return (
                                     <View className={'w-full flex-row justify-start items-center bg-transparent px-5 max-[376px]:px-3 max-[376px]:my-0'}>
                                         <ActivityIndicator
@@ -151,7 +153,7 @@ export default function Home() {
                                 )
                             }
 
-                            if (!false) {
+                            if (!isSignedIn) {
                                 return (
                                     <View className={'w-full flex-row justify-start items-center bg-transparent px-5 max-[376px]:px-3 max-[376px]:my-0'}>
                                         <FontAwesome
@@ -160,9 +162,9 @@ export default function Home() {
                                             color={Colors[colorScheme ?? 'light'].text}
                                         />
                                         <PressBtn onPress={() => {
-                                            navigation.navigate("Sign-Up")
+                                            navigation.navigate(isFirstTime ? "Sign-Up" : "Sign-In")
                                         }} className={`w-[60px] max-w-[120px] ml-5 bg-slate-500 dark:bg-slate-700 rounded h-8 justify-center items-center`} >
-                                            <Text className={`text-white`}>Sign Up</Text>
+                                            <Text className={`text-white`}>{isFirstTime ? "Sign Up" : "Sign In"}</Text>
                                         </PressBtn>
                                     </View>
                                 )
@@ -179,7 +181,7 @@ export default function Home() {
                                             alt="Profile Image"
                                             className={`w-8 h-8 rounded-full`}
                                         />
-                                        <Text className="ml-5">{"username"}</Text>
+                                        <Text className="ml-5">{user?.username}</Text>
                                     </View>
                                     <View className="absolute items-center justify-center bg-transparent top-0 right-1 flex-row gap-2">
                                         <View style={{

@@ -1,7 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useRef, useCallback } from 'react'
 import * as ExpoLocation from 'expo-location';
-import { useUser } from '@clerk/clerk-expo';
 import { useAtom, atom } from 'jotai'
 import { atomWithStorage, createJSONStorage } from 'jotai/utils'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -36,9 +35,6 @@ export const profileRoleAtom = atomWithStorage<'taxi' | 'client' | 'admin'>('use
 const storedProfileState = createJSONStorage<'active' | 'streaming' | 'inactive'>(() => AsyncStorage)
 export const profileStateAtom = atomWithStorage<'active' | 'streaming' | 'inactive'>('profileState', "inactive", storedProfileState)
 
-// const storedIsRecievingTaxis = createJSONStorage<boolean>(() => AsyncStorage)
-// export const isRecievingTaxisAtom = atomWithStorage<boolean>('isRecievingTaxis', false, storedIsRecievingTaxis)
-
 const storedStreamingTo = createJSONStorage<string | null>(() => AsyncStorage)
 export const streamingToAtom = atomWithStorage<string | null>('streamingTo', null, storedStreamingTo)
 
@@ -57,7 +53,6 @@ const useMapConnection = () => {
     profileRoleRef.current = profileRole;
 
     const [profileState, setProfileState] = useAtom(profileStateAtom)
-    //const [isRecievingTaxis, setIsRecievingTaxis] = useAtom(isRecievingTaxisAtom)
     const profileStateRef = useRef(profileState);
     profileStateRef.current = profileState;
 
@@ -69,7 +64,6 @@ const useMapConnection = () => {
     const positionSubscrition = useRef<ExpoLocation.LocationSubscription | null>()
 
     const { isConnected, isInternetReachable } = NetInfo.useNetInfo();
-    const { user, isLoaded, isSignedIn } = useUser();
 
     const getLocation = () => {
         return ExpoLocation.getCurrentPositionAsync({});
@@ -206,7 +200,7 @@ const useMapConnection = () => {
 
     useEffect(() => {
         if (!positionSubscrition.current) {
-            console.log("📭 <== useEffect ==> hooks/useMapConnection.tsx ==> []")
+            console.log("📭 <== useEffect ==> hooks/useMapConnection.tsx ==> [] (📌trackPosition) ")
             void trackPosition()
         }
 

@@ -12,7 +12,6 @@ import {
 import { Link } from 'expo-router';
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useAtom, } from 'jotai';
-// import { useUser } from '@clerk/clerk-expo';
 import { useColorScheme } from 'nativewind';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
@@ -25,14 +24,14 @@ import Colors from '~/constants/Colors';
 
 import { userMarkersAtom } from '~/components/map/SelectMarkerIcon';
 import AbsoluteDropdown from '~/components/shared/AbsoluteDropdown';
-import { signMethodAtom } from '~/components/screens/Sign-up';
+import { isFirstTimeAtom } from '~/context/UserContext';
 import AbsoluteLoading from '../shared/AbsoluteLoading';
 
 void Image.prefetch("https://lh3.googleusercontent.com/a/AAcHTtfPgVic8qF8hDw_WPE80JpGOkKASohxkUA8y272Ow=s1000-c")
 
 const snapPoints = ["25%", "50%", "75%"];
 
-const FirstRoute = () => {
+const DiscoberTab = () => {
     return (
         (
             <View style={{ flex: 1, backgroundColor: 'transparent' }} />
@@ -84,7 +83,7 @@ const MarkersProfileTab = () => {
 }
 
 const renderTabsScene = SceneMap({
-    profile: FirstRoute,
+    discober: DiscoberTab,
     markers: MarkersProfileTab,
 });
 
@@ -100,11 +99,11 @@ const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, s
     const { user, signOut, session, isLoading, isLoaded, isSignedIn, error, isError } = useUser()
     const { width } = Dimensions.get('window');
 
-    const [signMethod, setSignMethod] = useAtom(signMethodAtom);
+    const [isFirstTime, _] = useAtom(isFirstTimeAtom);
     const [sheetCurrentSnap, setSheetCurrentSnap] = useState(-1);
     const [tabsIndex, setTabsIndex] = useState(0);
     const [tabsRoutes] = useState([
-        { key: 'profile', title: 'Perfil' },
+        { key: 'discober', title: 'Descubre' },
         { key: 'markers', title: 'Marcadores' },
     ]);
 
@@ -194,6 +193,7 @@ const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, s
                             {
                                 title: 'Cerrar sesión',
                                 onPress: () => {
+                                    console.log("signin out")
                                     void signOut()
                                 }
                             }
@@ -276,7 +276,7 @@ const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, s
                                         className={'h-12 max-[367px]:h-8 max-[768px]:h-10 w-[200px] max-[367px]:w-[160px] max-[768px]:w-[180px] bg-[#FCCB6F] dark:bg-white rounded-3xl justify-center items-center text-center'}
                                     >
                                         <Text darkColor="black" className={'text-white dark:text-black font-bold text-lg max-[367px]:text-base'}>
-                                            {signMethod !== 'undefined' ? "Sign In" : "Sign Up"}
+                                            {isFirstTime ? "Sign Up" : "Sign In"}
                                         </Text>
                                     </Link>
                                 </>

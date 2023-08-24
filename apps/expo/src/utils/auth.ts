@@ -53,7 +53,3 @@ export const isValidUsername = (username: string): [boolean, string] => {
 
     return [true, ""];
 }
-
-export const usernameToSlug = (username: string) => {
-    return username.toLowerCase().replace(/ /g, '-');
-}

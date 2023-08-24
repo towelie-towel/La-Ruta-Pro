@@ -1,7 +1,14 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import React, { createContext, useContext, useEffect, useState } from 'react'
 import { type Session } from '@supabase/supabase-js'
+import NetInfo from '@react-native-community/netinfo';
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { atomWithStorage, createJSONStorage } from 'jotai/utils'
+import { useSetAtom } from 'jotai'
 
 import { supabase } from "~/lib/supabase"
+
+const storedIsFirstTime = createJSONStorage<boolean>(() => AsyncStorage)
+export const isFirstTimeAtom = atomWithStorage<boolean>('isFirstTime', true, storedIsFirstTime)
 
 interface UserContext {
     session: Session | null | undefined,
@@ -58,32 +65,34 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     const [isLoaded, setIsLoaded] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
 
+    const setIsFirstTimeAtom = useSetAtom(isFirstTimeAtom)
+
     const getSession = async () => {
         setIsLoading(true)
         try {
-            const { data: { session }, error } = await supabase.auth.getSession()
+            const { data: { session: resSession }, error } = await supabase.auth.getSession()
             if (error) {
-                console.error("⭕ getSession ——© (session error)")
+                console.error("⭕ getSession ——© (auth internal error)")
                 setSession(null)
                 setSessionExpired(undefined)
                 setIsError(true)
                 setError(error)
-            } else if (session === null) {
+            } else if (resSession === null) {
                 console.warn("☢️ getSession ——© (session is null)")
                 setSession(null)
                 setIsError(true)
                 setError(new Error("Session is null"))
             } else {
                 console.log("👤 getSession ——© (fetched session succesful)")
-                setSession(session)
+                setSession(resSession)
                 setSessionExpired(undefined)
                 setSessionExpired(false)
                 setUser({
-                    id: session?.user.id,
-                    phone: session?.user.phone,
-                    email: session?.user.email,
-                    username: session?.user.user_metadata.username,
-                    slug: session?.user.user_metadata.slug,
+                    id: resSession?.user.id,
+                    phone: resSession?.user.phone,
+                    email: resSession?.user.email,
+                    username: resSession?.user.user_metadata.username,
+                    slug: resSession?.user.user_metadata.slug,
                     ...user,
                 })
                 setIsSignedIn(true)
@@ -91,6 +100,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                 setError(null)
             }
         } catch (error) {
+            console.error("⭕ getSession ——© (auth error)")
             if (error instanceof Error) {
                 setSessionExpired(undefined)
                 setIsError(true)
@@ -107,6 +117,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
         try {
             const { error } = await supabase.auth.signOut()
             if (error) {
+                console.error("⭕ signOut ——© (auth internal error)")
                 // Case intern error
                 setIsError(true)
                 setError(error)
@@ -121,6 +132,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                 setError(null)
             }
         } catch (error) {
+            console.error("⭕ signOut ——© (error)")
             if (error instanceof Error) {
                 setIsError(true)
                 setError(error)
@@ -148,7 +160,9 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                 email: email ? email : undefined
             }).eq('id', 1)
             if (error) {
+                console.error("⭕ updateUser ——© (PostgresError internam error)")
                 setIsError(true)
+                setError({ ...error, name: "PostgresError" })
             } else {
                 console.log("👤 signOut ——© (signed out succesful)")
                 setUser({
