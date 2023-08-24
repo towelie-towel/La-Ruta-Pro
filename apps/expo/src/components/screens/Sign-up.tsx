@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
     LayoutAnimation,
     TextInput,
@@ -10,18 +10,13 @@ import { Stack, usePathname, useRouter } from 'expo-router';
 import { type DrawerNavigationProp } from '@react-navigation/drawer';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { atomWithStorage, createJSONStorage } from 'jotai/utils'
 
 import { supabase } from '~/lib/supabase'
 import { type DrawerParamList } from '~/app';
 import { View } from '~/components/shared/Themed';
 import { PressBtn } from '~/components/shared/PressBtn';
 import Colors from '~/constants/Colors';
-import { isValidPassword, isValidPhone, isValidUsername, usernameToSlug } from '~/utils/auth';
-
-const storedSignMethod = createJSONStorage<'oauth' | 'password' | 'undefined'>(() => AsyncStorage)
-export const signMethodAtom = atomWithStorage<'oauth' | 'password' | 'undefined'>('signMethod', 'undefined', storedSignMethod)
+import { isValidPassword, isValidPhone, isValidUsername } from '~/utils/auth';
 
 export default function SignUp({ navigation }: { navigation?: DrawerNavigationProp<DrawerParamList> }) {
 
@@ -76,20 +71,19 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
         const [phoneOk, phoneErr] = isValidPhone(phoneNumber.trim())
         const [passwordOk, passwordErr] = isValidPassword(password)
         const [usernameOk, usernameErr] = isValidUsername(username)
-        const slug = usernameToSlug(username)
 
         if (!phoneOk || !passwordOk || !usernameOk) {
             if (!phoneOk) {
                 setPhoneError(phoneErr)
-                console.error(JSON.stringify("invalid phone: " + phoneErr, null, 2))
+                console.error("invalid phone: " + phoneErr)
             }
             if (!passwordOk) {
                 setPasswordError(passwordErr)
-                console.error(JSON.stringify("invalid password: " + passwordErr, null, 2))
+                console.error("invalid password: " + passwordErr)
             }
             if (!usernameOk) {
                 setUsernameError(usernameErr)
-                console.error(JSON.stringify("invalid username: " + usernameErr, null, 2))
+                console.error("invalid username: " + usernameErr)
             }
             setIsLoading(false)
             return
@@ -120,7 +114,7 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
 
     const verifyOtp = async () => {
         setIsLoading(true)
-        const { error } = await supabase.auth.verifyOtp({
+        const { error, data } = await supabase.auth.verifyOtp({
             phone: '+53' + phoneNumber.trim(),
             token: otpToken,
             type: 'sms',
@@ -130,6 +124,9 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
             setIsLoading(false)
             return
         }
+
+        console.log("User Signed In", JSON.stringify(data, null, 2))
+
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
         setIsPhoneVerified(true)
         setPendingVerification(false)
