@@ -61,17 +61,10 @@ const useMapConnection = () => {
     streamingToRef.current = streamingTo;
 
     const ws = useRef<WebSocket | null>(null);
-    const positionSubscrition = useRef<ExpoLocation.LocationSubscription | null>()
+    const positionSubscription = useRef<ExpoLocation.LocationSubscription | null>()
+    const headingSubscription = useRef<ExpoLocation.LocationSubscription | null>()
 
     const { isConnected, isInternetReachable } = NetInfo.useNetInfo();
-
-    const getLocation = () => {
-        return ExpoLocation.getCurrentPositionAsync({});
-    }
-
-    const getHeading = () => {
-        return ExpoLocation.getHeadingAsync();
-    }
 
     const sendStringToServer = (message: string) => {
         if (ws.current?.readyState === WebSocket.OPEN) {
@@ -82,7 +75,7 @@ const useMapConnection = () => {
         }
     }
 
-    const handleWebSocketMessage = useCallback((event: MessageEvent<any>) => {
+    const handleWebSocketMessage = useCallback((event: MessageEvent) => {
         // event.data.startsWith("taxis-") ? void setMarkers(JSON.parse(event.data.replace("markers-", ""))) : null;
         // event.data.startsWith("stream-") ? void setMarkers(JSON.parse(event.data.replace("markers-", ""))) : null;
         if (event.data instanceof ArrayBuffer) {
@@ -101,7 +94,7 @@ const useMapConnection = () => {
         const suckItToMeBBy = new WebSocket(`ws://192.168.1.103:6942/subscribe?id=6ec0bd7f-11c0-43da-975e-2a8ad9eba&lat=51.5073509&lon=-0.1277581999999997`, protocol);
 
         // TODO: stream depending the role
-        suckItToMeBBy.addEventListener("open", (event) => {
+        suckItToMeBBy.addEventListener("open", (_event) => {
             console.log("🎯 asyncNewWebSocket ==> (Connection opened) state profileState===\"streaming\"");
             // TODO: handle admin case
             if (profileRoleRef.current === "taxi") {
@@ -111,12 +104,12 @@ const useMapConnection = () => {
             }
         });
 
-        suckItToMeBBy.addEventListener('close', (event) => {
+        suckItToMeBBy.addEventListener('close', (_event) => {
             console.log("❌ asyncNewWebSocket ==> (Connection closed) state profileState===\"inactive\"");
             void setProfileState("inactive")
         });
 
-        suckItToMeBBy.addEventListener('error', (error) => {
+        suckItToMeBBy.addEventListener('error', (_error) => {
             console.log("💥 asyncNewWebSocket ==> (Connection error) state profileState===\"inactive\"");
             void setProfileState("inactive")
         });
@@ -134,14 +127,14 @@ const useMapConnection = () => {
             await ExpoLocation.requestForegroundPermissionsAsync();
         }
 
-        if (positionSubscrition.current) {
-            console.log("🌬️ trackPosition ==> positionSubscrition = true ")
+        if (positionSubscription.current) {
+            console.log("🌬️ trackPosition ==> positionSubscription = true ")
             return;
         }
 
         await ExpoLocation.enableNetworkProviderAsync()
 
-        const subscrition = await ExpoLocation.watchPositionAsync(
+        const posSubscrition = await ExpoLocation.watchPositionAsync(
             {
                 accuracy: ExpoLocation.Accuracy.BestForNavigation,
                 timeInterval: 2000,
@@ -149,27 +142,34 @@ const useMapConnection = () => {
             (newPosition) => {
                 try {
                     if (profileStateRef.current === "streaming") {
-                        const stringMessage = `${newPosition.coords.latitude},${newPosition.coords.longitude}`
-                        sendStringToServer(stringMessage)
+                        sendStringToServer(`${newPosition.coords.latitude},${newPosition.coords.longitude}`)
                     }
-                    getHeading()
-                        .then((heading) => {
-                            setHeading(heading);
-                            setPosition({ ...newPosition, coords: { ...newPosition.coords, heading: heading.trueHeading } })
-                            void setPositionHistory(async (oldPositionHistory) => [...((await oldPositionHistory) ?? []), newPosition])
-                        })
-                        .catch((error) => {
-                            console.error(error)
-                        })
-
+                    setPosition(newPosition)
+                    void setPositionHistory(async (oldPositionHistory) => [...((await oldPositionHistory) ?? []), newPosition])
                 } catch (error) {
                     console.error(error)
                 }
             },
 
         )
-        console.log("📌 trackPosition ==> (Setted positionSubscrition)")
-        positionSubscrition.current = subscrition
+
+        console.log("📌 trackPosition ==> (Setted position subscriptions)")
+        positionSubscription.current = posSubscrition
+    }
+
+    const trackHeading = async () => {
+        if (headingSubscription.current) {
+            console.log("🌬️ trackHeading ==> headingSubscription = true ")
+            return;
+        }
+        const headSubscrition = await ExpoLocation.watchHeadingAsync(
+            (newHeading) => {
+                setHeading(newHeading);
+            },
+        )
+
+        console.log("📌 trackPosition ==> (Setted heading subscriptions)")
+        headingSubscription.current = headSubscrition
     }
 
     const resetConnection = async () => {
@@ -199,16 +199,24 @@ const useMapConnection = () => {
     }
 
     useEffect(() => {
-        if (!positionSubscrition.current) {
+        if (!positionSubscription.current) {
             console.log("📭 <== useEffect ==> hooks/useMapConnection.tsx ==> [] (📌trackPosition) ")
             void trackPosition()
         }
+        if (!headingSubscription.current) {
+            console.log("📭 <== useEffect ==> hooks/useMapConnection.tsx ==> [] (📌trackHeading) ")
+            void trackHeading()
+        }
 
         return () => {
-            if (positionSubscrition.current) {
-                console.log("📪 <== useEffect-return ==> hooks/useMapConnection.tsx ==> [] (🔪positionSubscrition)")
-                positionSubscrition.current.remove()
-                positionSubscrition.current = null
+            console.log("📪 <== useEffect-return ==> hooks/useMapConnection.tsx ==> [] (🔪position/heading subscriptions)")
+            if (positionSubscription.current) {
+                positionSubscription.current.remove()
+                positionSubscription.current = null
+            }
+            if (headingSubscription.current) {
+                headingSubscription.current.remove()
+                headingSubscription.current = null
             }
         }
     }, []);
