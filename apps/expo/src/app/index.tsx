@@ -2,9 +2,6 @@ import {
     Image,
     Dimensions,
     ActivityIndicator,
-    Pressable,
-    Animated,
-    Keyboard,
 } from "react-native";
 import {
     DrawerContentScrollView,
@@ -31,7 +28,6 @@ import PaymentScreen from '~/components/screens/Payment';
 import NetworkScreen from "~/components/screens/Network";
 import AdminScreen from "~/components/screens/Admin";
 
-import usePressIn from '~/hooks/animations/usePressIn';
 import { useUser, isFirstTimeAtom } from "~/context/UserContext";
 
 const isAdmin = true;
@@ -65,7 +61,6 @@ export default function Home() {
     const { isConnected, isInternetReachable, type: connectionType } = NetInfo.useNetInfo()
     const { colorScheme } = useColorScheme();
 
-    const { animatedValue: pressMenuAnim, handlePressIn: pressInMenu, handlePressOut: pressOutMenu } = usePressIn()
     const [isFirstTime, _] = useAtom(isFirstTimeAtom);
 
     const { session, user, isSignedIn, isLoading } = useUser()
@@ -80,9 +75,10 @@ export default function Home() {
                     borderRightColor: colorScheme === 'dark' ? '#333333' : '#888888',
                     borderRightWidth: 1,
                 }],
-                drawerType: /* isLargeScreen ? 'permanent' :  */'back',
+                drawerType: 'back',
                 overlayColor: 'transparent',
-                header({ navigation }) {
+                headerShown: false,
+                /* header({ navigation }) {
                     return (
                         <Animated.View
                             className={'absolute top-9 left-10 max-[367px]:left-6'}
@@ -117,7 +113,7 @@ export default function Home() {
                             </Pressable>
                         </Animated.View>
                     )
-                },
+                }, */
 
             }}
             drawerContent={(props) => {
