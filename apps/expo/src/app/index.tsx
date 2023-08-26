@@ -78,42 +78,6 @@ export default function Home() {
                 drawerType: 'back',
                 overlayColor: 'transparent',
                 headerShown: false,
-                /* header({ navigation }) {
-                    return (
-                        <Animated.View
-                            className={'absolute top-9 left-10 max-[367px]:left-6'}
-                            style={[
-                                {
-                                    transform: [
-                                        {
-                                            scale: pressMenuAnim
-                                        }
-                                    ]
-                                },
-                            ]}
-                        >
-                            <Pressable
-                                onPressIn={() => {
-                                    pressInMenu();
-                                }}
-                                onPressOut={() => {
-                                    pressOutMenu();
-                                }}
-                                onPress={() => {
-                                    navigation.openDrawer();
-                                    Keyboard.dismiss()
-                                }}
-                                className={'p-3 rounded-full bg-transparent'}
-                            >
-                                <AntDesign
-                                    name={'menuunfold'}
-                                    size={30}
-                                    color={Colors[colorScheme ?? 'light'].text}
-                                />
-                            </Pressable>
-                        </Animated.View>
-                    )
-                }, */
 
             }}
             drawerContent={(props) => {
