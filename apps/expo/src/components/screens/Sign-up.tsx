@@ -96,6 +96,7 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
             options: {
                 data: {
                     username: username,
+                    role: 'client'
                 }
             }
         })

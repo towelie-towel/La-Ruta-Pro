@@ -27,6 +27,7 @@ interface UserContext {
 interface User {
     id?: string | null,
     username?: string | null,
+    role?: string | null,
     email?: string | null,
     phone?: string | null,
     slug?: string | null,
@@ -93,6 +94,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
                     email: resSession?.user.email,
                     username: resSession?.user.user_metadata.username,
                     slug: resSession?.user.user_metadata.slug,
+                    role: resSession?.user.user_metadata.role,
                     ...user,
                 })
                 setIsSignedIn(true)
