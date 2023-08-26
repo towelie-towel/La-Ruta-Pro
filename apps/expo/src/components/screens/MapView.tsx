@@ -4,38 +4,35 @@ import {
     StatusBar,
     Dimensions,
     LayoutAnimation,
+    Keyboard,
 } from "react-native";
-import MapView, { /* type MapMarker,  type Region,*/ PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import { type BottomSheetModal, BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { useAtom, } from 'jotai';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useColorScheme } from 'nativewind';
 import NetInfo from '@react-native-community/netinfo';
-
-import useMapConnection from '~/hooks/useMapConnection';
-// import { type MarkerData } from '~/constants/Markers';
+import type {
+    DrawerNavigationProp
+} from '@react-navigation/drawer';
 
 import { View } from '~/components/shared/Themed';
 import { NightMap } from '~/constants/NightMap';
 import UserMarker from '~/components/map/UserMarker';
-// import CarMarker from '~/components/map/CarMarker';
-
 import { type UserMarkerIconType, userMarkersAtom } from '~/components/map/SelectMarkerIcon';
 import UserMarkerIcon from '~/components/map/UserMarkerIcon';
 import SelectMarkerIcon from '~/components/map/SelectMarkerIcon';
 import AnimatedRouteMarker from '~/components/map/AnimatedRouteMarker';
 import BottomSheet from '~/components/containers/BottomSheeetModal';
 import NavigationMenu from '~/components/containers/NavigationMenu';
+import SearchBar from '../map/SearchBar';
+import type { DrawerParamList } from '~/app';
 
-const MapViewComponent = () => {
-
+const MapViewComponent = ({ navigation }: { navigation: DrawerNavigationProp<DrawerParamList, "Map"> }) => {
     useKeepAwake();
     const { colorScheme } = useColorScheme();
     const { width, height } = Dimensions.get('window');
     const { isConnected, isInternetReachable } = NetInfo.useNetInfo();
-
-    // const { markers, location, heading } = useMapConnection();
-    const { resetConnection, trackPosition } = useMapConnection();
 
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isMenuVisible, setIsMenuVisible] = useState(true)
@@ -97,6 +94,7 @@ const MapViewComponent = () => {
     const toggleNavMenu = useCallback(() => {
         const toValue = isMenuOpen ? 0 : 1
         setIsMenuOpen(!isMenuOpen)
+        Keyboard.dismiss()
 
         Animated.spring(navigationAnimValue, {
             toValue,
@@ -158,14 +156,13 @@ const MapViewComponent = () => {
 
     const taxiBtnHandler = useCallback(async () => {
         console.log({ isConnected, isInternetReachable })
-        await resetConnection()
-        trackPosition()
     }, [isConnected, isInternetReachable])
 
     return (
         <BottomSheetModalProvider>
 
             <View className={"bg-transparent w-full h-full relative"}>
+
 
                 <MapView
                     onTouchMove={() => {
@@ -238,7 +235,8 @@ const MapViewComponent = () => {
 
                 </MapView>
 
-                <View className='absolute h-4 top-0 left-0 w-2 bg-red' />
+
+                <SearchBar navigation={navigation} />
 
                 {
                     isAddingMarker &&
