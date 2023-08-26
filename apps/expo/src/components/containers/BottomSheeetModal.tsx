@@ -180,18 +180,21 @@ const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, s
                         <AbsoluteDropdown actions={[
                             {
                                 title: 'Opción 1',
+                                icon: "radio",
                                 onPress: () => {
                                     console.log("Opción 1")
                                 }
                             },
                             {
                                 title: 'Opción 2',
+                                icon: "opacity",
                                 onPress: () => {
                                     console.log("Opción 2")
                                 }
                             },
                             {
                                 title: 'Cerrar sesión',
+                                icon: "close",
                                 onPress: () => {
                                     console.log("signin out")
                                     void signOut()

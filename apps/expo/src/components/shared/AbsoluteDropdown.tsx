@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import {
-    ActivityIndicator,
     LayoutAnimation,
     Pressable,
+    View,
 } from 'react-native';
 import { useColorScheme } from 'nativewind';
 import { Feather, MaterialIcons } from '@expo/vector-icons';
@@ -10,14 +10,12 @@ import { BlurView } from 'expo-blur';
 
 import {
     Text,
-    View
 } from '~/components/shared/Themed';
 import Colors from '~/constants/Colors';
-import AbsoluteLoading from './AbsoluteLoading';
 
 interface Action {
     onPress: () => void;
-    icon?: string;
+    icon?: keyof typeof MaterialIcons.glyphMap;
     title?: string;
     color?: string;
     backgroundColor?: string;
@@ -30,8 +28,6 @@ interface Action {
 const AbsoluteDropdown = ({ actions }: { actions: Action[] }) => {
     const [isOpen, setIsOpen] = useState(false);
     const { colorScheme } = useColorScheme();
-
-    const [isLoading, setIsLoading] = useState(false)
 
     const [width, setWidth] = useState(32);
     const [height, setHeight] = useState(32);
@@ -96,25 +92,47 @@ const AbsoluteDropdown = ({ actions }: { actions: Action[] }) => {
                     <Pressable
                         key={action.title}
                         onPress={() => { action.onPress(); }}
-                        className='w-full flex-row justify-start items-center pl-2'
+                        className='w-full flex-row justify-start items-center pl-3'
+                        disabled={action.disabled}
+                        style={{
+                            backgroundColor: action.backgroundColor,
+                        }}
                     >
-                        <MaterialIcons
-                            name='close'
-                            size={16}
-                            color={Colors[colorScheme ?? 'light'].text}
-                        />
-                        <Text className='text-sm ml-2 text-red-600'>Cerrar Sesión</Text>
+                        {
+                            action.icon
+                                ? <MaterialIcons
+                                    name={action.icon}
+                                    size={16}
+                                    color={Colors[colorScheme ?? 'light'].text}
+                                />
+                                : <View className='w-4' />
+                        }
+                        <Text
+                            style={{
+                                color: action.color ?? Colors[colorScheme ?? 'light'].text,
+                                opacity: action.disabled ? 0.5 : 1,
+                            }}
+                            className='text-sm ml-2'
+
+                        >{action.title}</Text>
                     </Pressable>
                 ))
                 }
 
             </Pressable>
 
-            {isOpen && <Pressable
-                onPress={handleCloseDropdown}
-                className='w-full h-full absolute z-20 opacity-20 bg-slate-500'
-            />}
+            {
+                isOpen && <Pressable
+                    onPress={handleCloseDropdown}
+                    className='w-full h-full absolute z-20'
+                >
+                    <BlurView
+                        className='w-full h-full'
+                        intensity={1}
+                    />
 
+                </Pressable>
+            }
         </>
     )
 };
