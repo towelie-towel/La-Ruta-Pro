@@ -6,10 +6,11 @@ import { AnimatedRegion, MarkerAnimated, type MapMarker } from 'react-native-map
 type AnimatedMarkerParams = {
     longitude: number;
     latitude: number;
-    heading: number
+    heading: number;
+    headingAnimated?: boolean;
 } & Omit<MapMarkerProps, "coordinate">
 
-const AnimatedMarker: React.FC<AnimatedMarkerParams> = ({ latitude, longitude, heading, children, style, ...restProps }) => {
+const AnimatedMarker: React.FC<AnimatedMarkerParams> = ({ latitude, longitude, heading, headingAnimated, children, style, ...restProps }) => {
 
     const { width, height } = Dimensions.get('window');
     const ASPECT_RATIO = width / height;
@@ -40,14 +41,14 @@ const AnimatedMarker: React.FC<AnimatedMarkerParams> = ({ latitude, longitude, h
 
         Animated.timing(animatedHeading, {
             toValue: heading,
-            duration: 900,
+            duration: 100,
             useNativeDriver: true
         }).start();
     }, [animatedHeading])
 
     useEffect(() => {
         animateTo(latitude, longitude, heading)
-    }, [latitude, longitude, heading, animateTo])
+    }, [latitude, longitude, animateTo, headingAnimated ? heading : undefined])
 
     return (
         <MarkerAnimated
@@ -56,9 +57,10 @@ const AnimatedMarker: React.FC<AnimatedMarkerParams> = ({ latitude, longitude, h
             coordinate={anim_marker_coords_ref.current} ref={(_ref) => anim_marker_ref.current = _ref}
             {...restProps}
             style={style}
+            rotation={!headingAnimated ? heading : undefined}
         >
             <Animated.View
-                style={{
+                style={headingAnimated ? {
                     ...(heading !== -1 && {
                         transform: [
                             {
@@ -69,7 +71,7 @@ const AnimatedMarker: React.FC<AnimatedMarkerParams> = ({ latitude, longitude, h
                             },
                         ],
                     }),
-                }}
+                } : {}}
             >
                 {children}
             </Animated.View>

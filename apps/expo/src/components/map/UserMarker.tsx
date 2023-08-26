@@ -1,21 +1,18 @@
 import React, { memo } from 'react'
 import { Circle, type MapMarkerProps } from 'react-native-maps'
-import { useAtom } from 'jotai'
 import { MaterialIcons } from '@expo/vector-icons';
 import { useColorScheme } from 'nativewind'
 
-import { positionAtom, headingAtom } from '~/hooks/useMapConnection'
 import AnimatedMarker from '~/components/map/AnimatedMarker'
 import Colors from '~/constants/Colors';
+import useMapConnection from '~/hooks/useMapConnection';
 
 const UserMarker = ({ description, title, userId, ...props }: { description: string, title: string, userId: string } & Omit<MapMarkerProps, "coordinate">) => {
     const { colorScheme } = useColorScheme();
-
-    const [position, _setPosition] = useAtom(positionAtom)
-    const [heading, _setHeading] = useAtom(headingAtom)
+    const { position, heading } = useMapConnection()
 
     if (!position || !heading) {
-        return null
+        return
     }
 
     return (
@@ -23,6 +20,7 @@ const UserMarker = ({ description, title, userId, ...props }: { description: str
             <AnimatedMarker
                 {...props}
                 heading={heading.trueHeading}
+                headingAnimated={false}
                 latitude={position.coords.latitude}
                 longitude={position.coords.longitude}
                 anchor={{ x: 0.5, y: 0.6 }}
