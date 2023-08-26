@@ -1,14 +1,10 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import * as ExpoLocation from 'expo-location';
-import { useAtom, atom } from 'jotai'
-import { atomWithStorage, createJSONStorage } from 'jotai/utils'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import NetInfo from '@react-native-community/netinfo';
 
-import { type MarkerData, initialMarkers } from '~/constants/Markers';
-
-export const markersAtom = atom<MarkerData[]>(initialMarkers)
+import { type MarkerData } from '~/constants/Markers';
+import { useUser } from '~/context/UserContext';
 
 // 🔓🔒🗡️💣🔫🔪📴📳📲💻🖥️
 // 📸📷📺🎬🎥📽️💡🕯️🔎🔍🔦
@@ -19,46 +15,12 @@ export const markersAtom = atom<MarkerData[]>(initialMarkers)
 // ⚡🔥❄️🌊💧💨💦💥💫🕳️♻️
 // ❌🆘⛔⭕🔞📵🚭🚫☢️❗☣️
 
-const storedPositionHistory = createJSONStorage<ExpoLocation.LocationObject[] | undefined>(() => AsyncStorage)
-const positionHistoryAtom = atomWithStorage<ExpoLocation.LocationObject[] | undefined>('historyPosition', undefined, storedPositionHistory)
-
-export const positionAtom = atom<ExpoLocation.LocationObject | undefined>(undefined);
-export const headingAtom = atom<ExpoLocation.LocationHeadingObject>({
-    trueHeading: 0,
-    magHeading: 0,
-    accuracy: 0,
-})
-
-const storedProfileRole = createJSONStorage<'taxi' | 'client' | 'admin'>(() => AsyncStorage)
-export const profileRoleAtom = atomWithStorage<'taxi' | 'client' | 'admin'>('userRole', "client", storedProfileRole)
-
-const storedProfileState = createJSONStorage<'active' | 'streaming' | 'inactive'>(() => AsyncStorage)
-export const profileStateAtom = atomWithStorage<'active' | 'streaming' | 'inactive'>('profileState', "inactive", storedProfileState)
-
-const storedStreamingTo = createJSONStorage<string | null>(() => AsyncStorage)
-export const streamingToAtom = atomWithStorage<string | null>('streamingTo', null, storedStreamingTo)
-
 const useMapConnection = () => {
-    const [markers, setMarkers] = useAtom(markersAtom);
-    const [positionHistory, setPositionHistory] = useAtom(positionHistoryAtom);
+    const [taxis, setTaxis] = useState<MarkerData[]>([]);
+    const [heading, setHeading] = useState<ExpoLocation.LocationHeadingObject>();
+    const [position, setPosition] = useState<ExpoLocation.LocationObject>();
 
-    const [heading, setHeading] = useAtom(headingAtom);
-
-    const [position, setPosition] = useAtom(positionAtom);
-    const positionRef = useRef(position);
-    positionRef.current = position;
-
-    const [profileRole, _setProfileRole] = useAtom(profileRoleAtom)
-    const profileRoleRef = useRef(profileRole);
-    profileRoleRef.current = profileRole;
-
-    const [profileState, setProfileState] = useAtom(profileStateAtom)
-    const profileStateRef = useRef(profileState);
-    profileStateRef.current = profileState;
-
-    const [streamingTo, _setStreamingTo] = useAtom(streamingToAtom)
-    const streamingToRef = useRef(streamingTo);
-    streamingToRef.current = streamingTo;
+    const [streamingTo, _setStreamingTo] = useState<string | null>(null)
 
     const ws = useRef<WebSocket | null>(null);
     const positionSubscription = useRef<ExpoLocation.LocationSubscription | null>()
@@ -66,14 +28,14 @@ const useMapConnection = () => {
 
     const { isConnected, isInternetReachable } = NetInfo.useNetInfo();
 
-    const sendStringToServer = (message: string) => {
+    const sendStringToServer = useCallback((message: string) => {
         if (ws.current?.readyState === WebSocket.OPEN) {
             ws.current?.send(message);
             return;
         } else {
             console.error("❌ sendStringToServer ==> !WebSocket.OPEN")
         }
-    }
+    }, [ws])
 
     const handleWebSocketMessage = useCallback((event: MessageEvent) => {
         // event.data.startsWith("taxis-") ? void setMarkers(JSON.parse(event.data.replace("markers-", ""))) : null;
@@ -86,40 +48,31 @@ const useMapConnection = () => {
         }
     }, []);
 
-    const asyncNewWebSocket = async () => {
-        const role = profileRoleRef.current;
-        const protocol = `map-${role}`;
+    const asyncNewWebSocket = useCallback(async () => {
+        const protocol = `map`;
 
         console.log("🌊 asyncNewWebSocket ==> websuckItToMeBBy ", protocol)
         const suckItToMeBBy = new WebSocket(`ws://192.168.1.103:6942/subscribe?id=6ec0bd7f-11c0-43da-975e-2a8ad9eba&lat=51.5073509&lon=-0.1277581999999997`, protocol);
 
         // TODO: stream depending the role
         suckItToMeBBy.addEventListener("open", (_event) => {
-            console.log("🎯 asyncNewWebSocket ==> (Connection opened) state profileState===\"streaming\"");
-            // TODO: handle admin case
-            if (profileRoleRef.current === "taxi") {
-                void setProfileState("active")
-            } else if (profileRoleRef.current === "client" && streamingToRef.current !== null) {
-                void setProfileState("streaming")
-            }
+            console.log("🎯 asyncNewWebSocket ==> (Connection opened)");
         });
 
         suckItToMeBBy.addEventListener('close', (_event) => {
-            console.log("❌ asyncNewWebSocket ==> (Connection closed) state profileState===\"inactive\"");
-            void setProfileState("inactive")
+            console.log("❌ asyncNewWebSocket ==> (Connection closed)");
         });
 
         suckItToMeBBy.addEventListener('error', (_error) => {
-            console.log("💥 asyncNewWebSocket ==> (Connection error) state profileState===\"inactive\"");
-            void setProfileState("inactive")
+            console.log("💥 asyncNewWebSocket ==> (Connection error)");
         });
 
         suckItToMeBBy.addEventListener('message', handleWebSocketMessage);
 
         return suckItToMeBBy;
-    }
+    }, [])
 
-    const trackPosition = async () => {
+    const trackPosition = useCallback(async () => {
         const { granted: permissionGranted } = await ExpoLocation.getForegroundPermissionsAsync()
 
         if (!permissionGranted) {
@@ -141,11 +94,10 @@ const useMapConnection = () => {
             },
             (newPosition) => {
                 try {
-                    if (profileStateRef.current === "streaming") {
+                    if (streamingTo) {
                         sendStringToServer(`${newPosition.coords.latitude},${newPosition.coords.longitude}`)
                     }
                     setPosition(newPosition)
-                    void setPositionHistory(async (oldPositionHistory) => [...((await oldPositionHistory) ?? []), newPosition])
                 } catch (error) {
                     console.error(error)
                 }
@@ -155,9 +107,9 @@ const useMapConnection = () => {
 
         console.log("📌 trackPosition ==> (Setted position subscriptions)")
         positionSubscription.current = posSubscrition
-    }
+    }, [sendStringToServer, setPosition, streamingTo, positionSubscription])
 
-    const trackHeading = async () => {
+    const trackHeading = useCallback(async () => {
         if (headingSubscription.current) {
             console.log("🌬️ trackHeading ==> headingSubscription = true ")
             return;
@@ -170,12 +122,11 @@ const useMapConnection = () => {
 
         console.log("📌 trackPosition ==> (Setted heading subscriptions)")
         headingSubscription.current = headSubscrition
-    }
+    }, [setHeading, headingSubscription])
 
-    const resetConnection = async () => {
+    const resetConnection = useCallback(async () => {
         if (!isConnected || !isInternetReachable) {
-            console.warn("💣 ==> No internet connection ==> profileState===\"inactive\"");
-            void setProfileState("inactive")
+            console.warn("💣 ==> No internet connection ==> ");
             return;
         }
 
@@ -196,7 +147,7 @@ const useMapConnection = () => {
         } catch (error) {
             console.error(error)
         }
-    }
+    }, [isConnected, isInternetReachable, ws, asyncNewWebSocket])
 
     useEffect(() => {
         if (!positionSubscription.current) {
@@ -227,14 +178,12 @@ const useMapConnection = () => {
     }, [isConnected]);
 
     return {
-        markers,
-        setMarkers,
+        taxis,
         ws,
         sendStringToServer,
-        location,
+        position,
         heading,
         handleWebSocketMessage,
-        positionHistory,
         resetConnection,
         trackPosition
     }
