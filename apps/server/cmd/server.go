@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 	supa "github.com/nedpals/supabase-go"
 	"golang.org/x/time/rate"
+	"googlemaps.github.io/maps"
 	"nhooyr.io/websocket"
 )
 
@@ -29,6 +30,7 @@ type Server struct {
 
 	serveMux    http.ServeMux
 	supabaseCli *supa.Client
+	mapsCli     *maps.Client
 
 	connectionsMu sync.Mutex
 	connections   map[*websocket.Conn]uuid.UUID
@@ -80,6 +82,15 @@ func (s *Server) initSupabaseCli() {
 	s.supabaseCli = supa.CreateClient(supabaseUrl, supabaseKey)
 }
 
+func (s *Server) initMapCli() {
+	googleKey := os.Getenv("GOOGLE_MAPS_API_KEY")
+	client, err := maps.NewClient(maps.WithAPIKey(googleKey))
+	if err != nil {
+		log.Fatal(err)
+	}
+	s.mapsCli = client
+}
+
 func newServer() *Server {
 	s := &Server{
 		subscriberMessageBuffer: 16,
@@ -95,8 +106,10 @@ func newServer() *Server {
 	}
 
 	s.initSupabaseCli()
+	s.initMapCli()
 	s.serveMux.Handle("/", http.FileServer(http.Dir("./assets")))
 	s.serveMux.HandleFunc("/subscribe", s.subscribeHandler)
+	s.serveMux.HandleFunc("/profile", s.getProfileHandler)
 
 	go s.broadcastTaxis()
 	go s.printSubsReads()
@@ -106,6 +119,36 @@ func newServer() *Server {
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.serveMux.ServeHTTP(w, r)
+}
+
+func (server *Server) getProfileHandler(w http.ResponseWriter, r *http.Request) {
+	querys := r.URL.Query()
+	idQ := querys.Get("id")
+
+	id, err := uuid.Parse(idQ)
+	if err != nil {
+		server.logf("invalid UUID: %v", err)
+		return
+	}
+
+	var results map[string]interface{}
+	err = server.supabaseCli.DB.From("profiles").Select("*").Single().Eq("id", id.String()).Execute(&results)
+	if err != nil {
+		panic(err)
+	}
+
+	const profileTemplate = `
+		{
+			"id": "%v",
+			"slug": "%v",
+			"role": "%v",
+			"username": "%v",
+			"full_name": "%v",
+			"avatar_url": "%v",
+			"phone": "%v"	
+		}
+	`
+	w.Write([]byte(fmt.Sprintf(profileTemplate, results["id"], results["slug"], results["role"], results["username"], results["full_name"], results["avatar_url"], results["phone"])))
 }
 
 func (server *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) {
