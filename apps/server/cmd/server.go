@@ -6,12 +6,14 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/google/uuid"
+	supa "github.com/nedpals/supabase-go"
 	"golang.org/x/time/rate"
 	"nhooyr.io/websocket"
 )
@@ -25,7 +27,8 @@ type Server struct {
 
 	logf func(f string, v ...interface{})
 
-	serveMux http.ServeMux
+	serveMux    http.ServeMux
+	supabaseCli *supa.Client
 
 	connectionsMu sync.Mutex
 	connections   map[*websocket.Conn]uuid.UUID
@@ -71,6 +74,12 @@ func parseLocation(location string) (Location, error) {
 	return Location{Lat: latitude, Lon: longitude}, nil
 }
 
+func (s *Server) initSupabaseCli() {
+	supabaseUrl := os.Getenv("SUPABASE_URL")
+	supabaseKey := os.Getenv("SUPABASE_KEY")
+	s.supabaseCli = supa.CreateClient(supabaseUrl, supabaseKey)
+}
+
 func newServer() *Server {
 	s := &Server{
 		subscriberMessageBuffer: 16,
@@ -84,6 +93,8 @@ func newServer() *Server {
 
 		taxiPositions: make(map[uuid.UUID]Location),
 	}
+
+	s.initSupabaseCli()
 	s.serveMux.Handle("/", http.FileServer(http.Dir("./assets")))
 	s.serveMux.HandleFunc("/subscribe", s.subscribeHandler)
 

@@ -9,8 +9,6 @@ import (
 	"os/signal"
 	"time"
 
-	"server/pkg/auth"
-
 	"github.com/joho/godotenv"
 )
 
@@ -22,14 +20,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	tc := auth.NewTwilioClient()
-	auth.SendOtp(tc, "+5352953930")
-	auth.CheckOtp(tc, "+5352953930")
-
-	// err := run()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
+	 err = run()
+	 if err != nil {
+	 	log.Fatal(err)
+	 }
 }
 
 const defaultAddr = "192.168.1.103:6942"
@@ -68,8 +62,7 @@ func run() error {
 		log.Printf("terminating: %v", sig)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-
-	return s.Shutdown(ctx)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10) 
+  defer cancel() 
+  return s.Shutdown(ctx)
 }
