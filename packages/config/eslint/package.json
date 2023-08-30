@@ -4,11 +4,9 @@
   "license": "MIT",
   "files": [
     "./base.js",
-    "./nextjs.js",
     "./react.js"
   ],
   "dependencies": {
-    "@next/eslint-plugin-next": "^13.4.10",
     "@types/eslint": "^8.44.0",
     "@typescript-eslint/eslint-plugin": "^6.1.0",
     "@typescript-eslint/parser": "^6.1.0",

@@ -4,14 +4,12 @@ import {
   Platform,
 } from 'react-native'
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { ClerkProvider } from "@clerk/clerk-expo";
 import { Stack } from "expo-router";
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from 'expo-font';
 
 import { UserProvider } from "~/context/UserContext";
-import { tokenCache } from "~/utils/cache";
 
 if (Platform.OS === 'android') {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
@@ -39,47 +37,41 @@ const RootLayout = () => {
   }
 
   return (
-    <ClerkProvider
-      // eslint-disable-next-line turbo/no-undeclared-env-vars
-      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || "pk_test_Z3JhdGVmdWwtc2FpbGZpc2gtMTQuY2xlcmsuYWNjb3VudHMuZGV2JA"}
-      tokenCache={tokenCache}
-    >
 
-      <UserProvider>
-        <SafeAreaProvider onLayout={onLayoutRootView} >
+    <UserProvider>
+      <SafeAreaProvider onLayout={onLayoutRootView} >
 
-          <StatusBar />
-          <Stack
-            screenOptions={{
-              headerShown: false
-            }}
-          >
+        <StatusBar />
+        <Stack
+          screenOptions={{
+            headerShown: false
+          }}
+        >
 
-            <Stack.Screen
-              name="auth/sign-in"
-              options={{
-                /* headerShown: true,
-                headerTintColor: colorScheme === 'dark' ? 'white' : 'black',
-                headerStyle: {
-                  backgroundColor: colorScheme === 'dark' ? 'black' : 'white',
-                }, */
-                presentation: "transparentModal"
-              }}
-            />
-            <Stack.Screen name="auth/sign-up" options={{
+          <Stack.Screen
+            name="auth/sign-in"
+            options={{
               /* headerShown: true,
               headerTintColor: colorScheme === 'dark' ? 'white' : 'black',
               headerStyle: {
                 backgroundColor: colorScheme === 'dark' ? 'black' : 'white',
               }, */
               presentation: "transparentModal"
-            }} />
+            }}
+          />
+          <Stack.Screen name="auth/sign-up" options={{
+            /* headerShown: true,
+            headerTintColor: colorScheme === 'dark' ? 'white' : 'black',
+            headerStyle: {
+              backgroundColor: colorScheme === 'dark' ? 'black' : 'white',
+            }, */
+            presentation: "transparentModal"
+          }} />
 
-          </Stack>
+        </Stack>
 
-        </SafeAreaProvider>
-      </UserProvider>
-    </ClerkProvider>
+      </SafeAreaProvider>
+    </UserProvider>
   );
 };
 
