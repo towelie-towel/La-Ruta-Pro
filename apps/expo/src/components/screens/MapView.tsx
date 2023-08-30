@@ -6,7 +6,7 @@ import {
     LayoutAnimation,
     Keyboard,
 } from "react-native";
-import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { type LatLng, PROVIDER_GOOGLE, Polyline, Circle } from 'react-native-maps';
 import { type BottomSheetModal, BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { useAtom, } from 'jotai';
 import { useKeepAwake } from 'expo-keep-awake';
@@ -15,6 +15,7 @@ import NetInfo from '@react-native-community/netinfo';
 import type {
     DrawerNavigationProp
 } from '@react-navigation/drawer';
+import { Accuracy, getCurrentPositionAsync } from 'expo-location';
 
 import { View } from '~/components/shared/Themed';
 import { NightMap } from '~/constants/NightMap';
@@ -27,9 +28,19 @@ import BottomSheet from '~/components/containers/BottomSheeetModal';
 import NavigationMenu from '~/components/containers/NavigationMenu';
 import SearchBar from '../map/SearchBar';
 import type { DrawerParamList } from '~/app';
+import { polylineDecode } from '~/utils/helpers';
+
+/* 
+    
+    wtf AIzaSyB-7B_Jh6ZXK9jWiY-VjXbvxhx-4QeXbJU
+
+    wtf AIzaSyBVW-J8k9X8Y0gL5CK2Lhwz-w7Q2K5Yjn4
+
+*/
 
 const MapViewComponent = ({ navigation }: { navigation: DrawerNavigationProp<DrawerParamList, "Map"> }) => {
     useKeepAwake();
+    console.log("Map re-rendered")
     const { colorScheme } = useColorScheme();
     const { width, height } = Dimensions.get('window');
     const { isConnected, isInternetReachable } = NetInfo.useNetInfo();
@@ -48,6 +59,8 @@ const MapViewComponent = ({ navigation }: { navigation: DrawerNavigationProp<Dra
     const [selectedMarkerIndex, setSelectedMarkerIndex] = useState<number | null>(null);
     const bottomSheetModalRef = useRef<BottomSheetModal>(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
+
+    const [activeRoute, setActiveRoute] = useState<LatLng[] | null>(null)
 
     /* useEffect(() => {
         if (selectedMarkerIndex !== null && mapViewRef.current) {
@@ -224,6 +237,17 @@ const MapViewComponent = ({ navigation }: { navigation: DrawerNavigationProp<Dra
                         })
                     }
 
+                    <Polyline
+                        coordinates={activeRoute ?? []}
+                        strokeColor="white"
+                        strokeWidth={5}
+                    />
+
+                    <Circle center={{
+                        longitude: -82.38052,
+                        latitude: 23.11848
+                    }} radius={200} />
+
                     <AnimatedRouteMarker />
 
                     <UserMarker
@@ -236,7 +260,37 @@ const MapViewComponent = ({ navigation }: { navigation: DrawerNavigationProp<Dra
                 </MapView>
 
 
-                <SearchBar navigation={navigation} />
+                <SearchBar navigation={navigation} onPlacePress={async (data, details) => {
+                    // just use the directions api
+                    const apiKey = 'AIzaSyAtcwUbA0jjJ6ARXl5_FqIqYcGbTI_XZEE';
+                    let url = 'https://maps.googleapis.com/maps/api/directions/json';
+
+
+                    if (!details) {
+                        return
+                    }
+
+                    const position = await getCurrentPositionAsync({
+                        accuracy: Accuracy.Highest,
+                    })
+
+                    url += `?destination=place_id:${data.place_id}`
+                    url += `&origin=${position.coords.latitude}%2C${position.coords.longitude}`
+                    url += `&key=${apiKey}`
+                    url += `&language=es`
+
+                    try {
+                        const res = await fetch(url)
+                        const json = await res.json()
+                        setActiveRoute((polylineDecode(json.routes[0].overview_polyline.points) ?? []).map(([lat, lng]) => ({ latitude: lat, longitude: lng })))
+                        console.log(JSON.stringify({ activeRoute }, null, 2))
+                    } catch (error) {
+                        if (error instanceof Error) {
+                            console.error(error.message)
+                        }
+                    }
+
+                }} />
 
                 {
                     isAddingMarker &&

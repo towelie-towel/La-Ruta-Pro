@@ -6,7 +6,7 @@ import { useAtomValue } from 'jotai';
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 
 import { View } from '../shared/Themed'
-import { GooglePlacesAutocomplete } from './lib/GooglePlacesAutocomplete';
+import { GooglePlacesAutocomplete, type GooglePlaceData, type GooglePlaceDetail } from './lib/GooglePlacesAutocomplete';
 import { PressBtn } from '../shared/PressBtn';
 // import Colors from '~/constants/Colors';
 import type { DrawerParamList } from '~/app';
@@ -18,7 +18,12 @@ https://maps.googleapis.com/maps/api/place/autocomplete/json?input=23%20y%2026&l
 https://maps.googleapis.com/maps/api/place/textsearch/json?query=23%20y%2025&location=23.1383300%2C-82.3641700&radius=500&key=AIzaSyAtcwUbA0jjJ6ARXl5_FqIqYcGbTI_XZEE
 */
 
-const SearchBar = ({ navigation }: { navigation: DrawerNavigationProp<DrawerParamList, "Map"> }) => {
+interface Params {
+    navigation: DrawerNavigationProp<DrawerParamList, "Map">,
+    onPlacePress: (data: GooglePlaceData, details: GooglePlaceDetail | null) => void | Promise<void>
+}
+
+const SearchBar = ({ navigation, onPlacePress }: Params) => {
     const { width } = useWindowDimensions()
     const userMarkers = useAtomValue(userMarkersAtom)
     // const { colorScheme } = useColorScheme()
@@ -57,23 +62,21 @@ const SearchBar = ({ navigation }: { navigation: DrawerNavigationProp<DrawerPara
                     }
                 }))}
                 placeholder='A dónde vamos?'
-                onPress={(data, details = null) => {
-                    // 'details' is provided when fetchDetails = true
-                    console.log(data, details);
-                }}
+                onPress={(data, details,) => void onPlacePress(data, details)}
                 styles={{
                     textInputContainer: {
                         paddingLeft: 60
                     }
                 }}
+                fetchDetails
                 query={{
                     key: 'AIzaSyAtcwUbA0jjJ6ARXl5_FqIqYcGbTI_XZEE',
                     language: 'es',
-                    location: "23.1383300,-82.3641700",
-                    radius: 200,
-                    type: "geocode",
+                    components: 'country:cu',
+                    location: "23.11848,-82.38052",
+                    radius: 100,
                 }}
-                nearbyPlacesAPI='GooglePlacesSearch'
+                /* nearbyPlacesAPI='GooglePlacesSearch' */
                 currentLocation
                 currentLocationLabel='My Location'
 
