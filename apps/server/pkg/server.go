@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"context"
@@ -11,6 +11,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	gmap "server/pkg/google_map"
 
 	"github.com/google/uuid"
 	supa "github.com/nedpals/supabase-go"
@@ -39,7 +41,7 @@ type Server struct {
 	taxiSubs   map[uuid.UUID]*Subscriber
 	clientSubs map[uuid.UUID]*Subscriber
 
-	taxiPositions map[uuid.UUID]Location
+	taxiPositions map[uuid.UUID]gmap.Location
 }
 
 type Subscriber struct {
@@ -47,33 +49,8 @@ type Subscriber struct {
 	msgs      chan string
 	closeSlow func()
 	protocol  string
-	position  Location
+	position  gmap.Location
 	conn      *websocket.Conn
-}
-
-type Location struct {
-	Lat float64
-	Lon float64
-}
-
-func (loc Location) String() string {
-	return fmt.Sprintf("%f,%f", loc.Lat, loc.Lon)
-}
-
-func parseLocation(location string) (Location, error) {
-	pair := strings.Split(location, ",")
-	if len(pair) != 2 {
-		return Location{}, fmt.Errorf("invalid location format")
-	}
-	latitude, err := strconv.ParseFloat(strings.TrimSpace(pair[0]), 64)
-	if err != nil {
-		return Location{}, fmt.Errorf("invalid latitude: %v", err)
-	}
-	longitude, err := strconv.ParseFloat(strings.TrimSpace(pair[1]), 64)
-	if err != nil {
-		return Location{}, fmt.Errorf("invalid longitude: %v", err)
-	}
-	return Location{Lat: latitude, Lon: longitude}, nil
 }
 
 func (s *Server) initSupabaseCli() {
@@ -91,7 +68,7 @@ func (s *Server) initMapCli() {
 	s.mapsCli = client
 }
 
-func newServer() *Server {
+func NewServer() *Server {
 	s := &Server{
 		subscriberMessageBuffer: 16,
 		logf:                    log.Printf,
@@ -102,7 +79,7 @@ func newServer() *Server {
 		taxiSubs:   make(map[uuid.UUID]*Subscriber),
 		clientSubs: make(map[uuid.UUID]*Subscriber),
 
-		taxiPositions: make(map[uuid.UUID]Location),
+		taxiPositions: make(map[uuid.UUID]gmap.Location),
 	}
 
 	s.initSupabaseCli()
@@ -173,7 +150,7 @@ func (server *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	coord := Location{
+	coord := gmap.Location{
 		Lat: lat,
 		Lon: lon,
 	}
@@ -276,7 +253,7 @@ func subReader(ctx context.Context, server *Server, ws *websocket.Conn, l *rate.
 		newPosition := strings.Split(msgString, "-")[1]
 		fmt.Printf("Position recieved: %s \n", newPosition)
 		server.connectionsMu.Lock()
-		loc, err := parseLocation(newPosition)
+		loc, err := gmap.ParseLocation(newPosition)
 		if err != nil {
 			return fmt.Errorf("failed to parse location: %v", err)
 		}
