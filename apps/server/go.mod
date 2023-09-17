@@ -11,11 +11,11 @@ require (
 require (
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.4.3 // indirect
-	github.com/google/go-cmp v0.5.5 // indirect
+	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/nedpals/postgrest-go v0.1.3 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	golang.org/x/sys v0.1.0 // indirect
+	golang.org/x/sys v0.12.0 // indirect
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 )

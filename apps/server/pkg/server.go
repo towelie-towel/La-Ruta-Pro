@@ -84,7 +84,8 @@ func NewServer() *Server {
 
 	s.initSupabaseCli()
 	s.initMapCli()
-	s.serveMux.Handle("/", http.FileServer(http.Dir("./assets")))
+	s.serveMux.Handle("/", http.FileServer(http.Dir("./assets/simulator")))
+	// s.serveMux.Handle("/", http.FileServer(http.Dir("./assets/chat")))
 	s.serveMux.HandleFunc("/subscribe", s.subscribeHandler)
 	s.serveMux.HandleFunc("/profile", s.getProfileHandler)
 
@@ -184,8 +185,14 @@ func (server *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) {
 	if protocol == "map-admin" {
 		server.logf("Wow, you are an admin, but this is not implemented yet")
 	} else if protocol == "map-taxi" {
+		if server.taxiSubs[id] != nil {
+			server.logf("this taxi is already subscribed")
+		}
 		server.taxiSubs[id] = sub
 	} else {
+		if server.clientSubs[id] != nil {
+			server.logf("this client is already subscribed")
+		}
 		server.clientSubs[id] = sub
 	}
 	server.connectionsMu.Unlock()
