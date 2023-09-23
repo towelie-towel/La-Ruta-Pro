@@ -1,89 +1,139 @@
-const subscriberTable = document.getElementById("subscribers-table");
+console.log("Running script");
+let wsConnections = []
+const subscriberTable = document.getElementById("subscribers-table-body");
+const streamingTable = document.getElementById("streaming-table-body");
 
 const originInput = document.getElementById("origin-input");
 const destinationInput = document.getElementById("destination-input");
-const stopBtn = document.getElementById("stop-btn");
-const connectAndEmmitBtn = document.getElementById("connectAndEmmit-btn");
-
-stopBtn.addEventListener("click", () => {
-  console.log("Hello");
-});
+const connectAndEmmitBtn = document.getElementById("connect-and-emmit-btn");
+const radioInputs =
+  document.querySelectorAll('input[type="radio"]');
 
 connectAndEmmitBtn.addEventListener("click", () => {
+  let selectedRole;
+  radioInputs.forEach((input) => {
+    if (input.checked) {
+      selectedRole = input.value;
+      return;
+    }
+  });
   fetch("https://www.uuidtools.com/api/generate/v4")
     .then((res) => res.json())
     .then((data) => {
-      connectAndEmmit(
-        getDirections(originInput.textContent, destinationInput.textContent),
-        "taxi",
-        data[0],
-      );
+      getRoute(originInput.value, destinationInput.value)
+        .then((route) => {
+          connectAndEmmit(route, selectedRole, data[0]);
+        });
     });
 });
 
 function connectAndEmmit(route, type, uuid) {
   let i = 0;
+  console.log("Running web sockets");
+  if (wsConnections.find(ws => ws.protocol === "client")) {
+    throw new Error("Client already connected");
+  }
   const conn = new WebSocket(
     `ws://${location.host}/subscribe?id=${uuid}&lat=${route[i].latitude}&lon=${route[i].longitude}`,
     `map-${type}`,
   );
+  wsConnections.push(conn);
   conn.addEventListener("close", (ev) => {
     console.log("Connection closed");
+    tdStatus = document.getElementById(`status-td-${uuid}`);
+    if (tdStatus) {
+      tdStatus.innerText = "Closed";
+    }
   });
   conn.addEventListener("open", (ev) => {
     console.info("websocket connected");
 
+    const tdStatus = document.createElement("td");
+    tdStatus.id = `status-td-${uuid}`;
+    tdStatus.innerText = "Open";
+    let tdType = document.createElement("td");
+    tdType.innerText = type;
+    let tdLatitude = document.createElement("td");
+    tdLatitude.innerText = route[i].latitude;
+    let tdLongitude = document.createElement("td");
+    tdLongitude.innerText = route[i].longitude;
     const closeBtn = document.createElement("button");
+    closeBtn.classList.add("btn");
     closeBtn.addEventListener("click", () => {
       conn.close();
     });
-    const thType = document.createElement("th");
-    const thStatus = document.createElement("td");
-    const thLatitude = document.createElement("td");
-    const thLongitude = document.createElement("td");
-    const thClose = document.createElement("td");
-    const tr = document.createElement("tr");
-
-    thType.innerText = type;
-    thStatus.innerText = "Open";
-    thLatitude.innerText = route[i].latitude;
-    thLongitude.innerText = route[i].longitude;
     closeBtn.innerText = "Close";
-    thClose.replaceChildren(closeBtn);
-    tr.id = `subscriber-${uuid}`;
-    tr.append(thType, thStatus, thLatitude, thLongitude, thClose);
-    subscriberTable.append(tr);
+    const tdClose = document.createElement("td");
+    tdClose.replaceChildren(closeBtn);
+    const trSubscribers = document.createElement("tr");
+    trSubscribers.id = `subscriber-${uuid}`;
+    trSubscribers.append(tdType, tdStatus, tdLatitude, tdLongitude, tdClose);
+    trSubscribers.classList.add("hover");
+    subscriberTable.append(trSubscribers);
 
-    const interval = setInterval(() => {
-      if (conn.readyState === conn.CLOSED) {
-        console.info("clearing interval");
-        clearInterval(interval);
-      } else {
-        conn.send(`${route[i].latitude},${route[i].longitude}`);
-        i++;
-      }
-    }, 1700);
+    if (type === "client") {
+      conn.addEventListener("message", (ev) => {
+        const message = ev.data;
+        if (typeof message !== "string") {
+          return;
+        }
+        const taxis = message.split("$");
+        streamingTable.innerHTML = "";
+        for (let taxi of taxis) {
+          taxi = taxi.split("&");
+          const coords = taxi[0].split(",");
+          const tdId = document.createElement("td");
+          tdId.innerText = taxi[1];
+          tdLatitude = document.createElement("td");
+          tdLatitude.innerText = coords[0];
+          tdLongitude = document.createElement("td");
+          tdLongitude.innerText = coords[1];
+          tdType = document.createElement("td");
+          tdType.innerText = "taxi";
+          const trStreaming = document.createElement("tr");
+          trStreaming.id = `streaming-${taxi[1]}`;
+          trStreaming.append(tdType, tdId, tdLatitude, tdLongitude);
+          trStreaming.classList.add("hover");
+          streamingTable.append(trStreaming);
+        }
+      });
+    }
+
+    if (type === "taxi") {
+      const interval = setInterval(() => {
+        if (conn.readyState === conn.CLOSED) {
+          console.info("clearing interval");
+          clearInterval(interval);
+        } else {
+          if (i === route.length - 1) {
+            clearInterval(interval);
+          }
+          console.log("pos");
+          conn.send(`pos#${route[i].latitude},${route[i].longitude}`);
+          i++;
+        }
+      }, 1700);
+    }
   });
 }
-
-
-export const getDirections = async (startLoc, destinationLoc) => {
+const getRoute = async (startLoc, destinationLoc) => {
   try {
     const resp = await fetch(
-      `https://maps.googleapis.com/maps/api/directions/json?origin=${startLoc}&destination=${destinationLoc}&key=AIzaSyAtcwUbA0jjJ6ARXl5_FqIqYcGbTI_XZEE`,
+      `http://${location.host}/route?from=${startLoc}&to=${destinationLoc}`,
     );
     const respJson = await resp.json();
     const decodedCoords = polylineDecode(
-      respJson.routes[0].overview_polyline.points,
+      respJson[0].overview_polyline.points,
     ).map((point, index) => ({ latitude: point[0], longitude: point[1] }));
     return decodedCoords;
   } catch (error) {
-    console.error(error);
+    console.error("getRoute error", error);
   }
 };
-export const duplicateCoords = (coords) => {
+
+const duplicateCoords = (coords) => {
   const newCoords = [];
-  for (let i = 0; i < coords.length - 1; i++) {
+  for (let i = 0; i < coords.lengtd - 1; i++) {
     newCoords.push({
       latitude: Number(coords[i]?.latitude),
       longitude: Number(coords[i]?.longitude),
@@ -97,7 +147,7 @@ export const duplicateCoords = (coords) => {
   }
   return newCoords;
 };
-export function polylineDecode(str, precision) {
+function polylineDecode(str, precision) {
   let index = 0,
     lat = 0,
     lng = 0,

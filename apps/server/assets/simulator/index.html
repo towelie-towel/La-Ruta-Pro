@@ -34,7 +34,7 @@
         <a class="btn btn-ghost normal-case text-xl">daisyUI</a>
       </div>
       <div class="navbar-end">
-        <button class="btn btn-ghost btn-circle">
+        <button class="btn btn-ghost btn-circle" onclick="add_subscriber_modal.showModal()">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -64,27 +64,27 @@
             <th>Longitude</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody id="streaming-table-body">
           <!-- row 1 -->
           <tr class="hover">
-            <th>Taxi</th>
+            <td>Taxi</td>
             <td>id....</td>
-            <td>latitude....</td>
-            <td>longitude....</td>
+            <td>23.118439331498397</td>
+            <td>-82.38065080644563</td>
           </tr>
           <!-- row 2 -->
           <tr class="hover">
-            <th>Taxi</th>
+            <td>Taxi</td>
             <td>id....</td>
-            <td>latitude....</td>
-            <td>longitude....</td>
+            <td>23.121832663066453</td>
+            <td>-82.40442767880837</td>
           </tr>
           <!-- row 3 -->
           <tr class="hover">
-            <th>Taxi</th>
+            <td>Taxi</td>
             <td>id....</td>
-            <td>latitude....</td>
-            <td>longitude....</td>
+            <td>23.132877519361337</td>
+            <td>-82.39034077962398</td>
           </tr>
         </tbody>
       </table>
@@ -104,10 +104,10 @@
             <th></th>
           </tr>
         </thead>
-        <tbody id="subscribers-table">
+        <tbody id="subscribers-table-body">
           <!-- row 1 -->
           <tr class="hover">
-            <th>Taxi</th>
+            <td>Taxi</td>
             <td>id....</td>
             <td>latitude....</td>
             <td>Longitude....</td>
@@ -117,17 +117,49 @@
       </table>
     </div>
 
-    <div class="flex flex-col w-full h-52 justify-start items-center">
-      <div class="flex flex-row items-center justify-center mb-5 gap-4">
-        <input type="text" placeholder="origin" class="input input-bordered" id="origin-input">
-        <input type="text" placeholder="destination" class="input input-bordered" id="destination-input">
+
+
+    <dialog id="add_subscriber_modal" class="modal">
+      <div class="modal-box">
+        <div class="flex flex-col justify-end items-center w-full gap-4 p-4">
+          <h1 class="" onclick="add_subscriber_modal.close()">Add Subscriber</h1>
+          <div class="flex gap-2">
+            <div className="subscriber-role">
+              <label className="label cursor-pointer">
+                <span className="label-text">Taxi</span>
+                <input type="radio" name="role-radio" value="taxi" className="radio checked:bg-yellow-500" checked />
+              </label>
+            </div>
+            <div className="subscriber-role">
+              <label className="label cursor-pointer">
+                <span className="label-text">Client</span>
+                <input type="radio" name="role-radio" value="client" className="radio checked:bg-blue-500" checked />
+              </label>
+            </div>
+            <div className="subscriber-role">
+              <label className="label cursor-pointer">
+                <span className="label-text">Admin</span>
+                <input type="radio" name="role-radio" value="admin" className="radio checked:bg-red-500" checked />
+              </label>
+            </div>
+          </div>
+          <div class="flex flex-row items-center justify-center gap-4">
+            <input type="text" placeholder="origin" class="input w-2/5 input-bordered" id="origin-input">
+            <input type="text" placeholder="destination" class="input w-2/5 input-bordered" id="destination-input">
+          </div>
+        </div>
+        <div class="modal-action">
+          <form method="dialog">
+            <button class="btn" id="connect-and-emmit-btn">Start</button>
+            <button class="btn">Close</button>
+          </form>
+        </div>
       </div>
-      <div class="flex flex-row items-center justify-center mb-5 gap-4">
-        <button class="btn" id="connectAndEmmit-btn">Stop Simulation</button>
-        <button class="btn" id="stop-btn">Start Simulation</button>
-      </div>
-    </div>
   </div>
+  <form method="dialog" class="modal-backdrop">
+    <button>close</button>
+  </form>
+  </dialog>
   <script type="text/javascript" src="/index.js"></script>
 </body>
 

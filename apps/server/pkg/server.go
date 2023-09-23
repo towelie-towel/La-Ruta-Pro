@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -40,6 +41,7 @@ type Server struct {
 
 	taxiSubs   map[uuid.UUID]*Subscriber
 	clientSubs map[uuid.UUID]*Subscriber
+	adminSubs  map[uuid.UUID]*Subscriber
 
 	taxiPositions map[uuid.UUID]gmap.Location
 }
@@ -78,6 +80,7 @@ func NewServer() *Server {
 
 		taxiSubs:   make(map[uuid.UUID]*Subscriber),
 		clientSubs: make(map[uuid.UUID]*Subscriber),
+		adminSubs:  make(map[uuid.UUID]*Subscriber),
 
 		taxiPositions: make(map[uuid.UUID]gmap.Location),
 	}
@@ -88,9 +91,10 @@ func NewServer() *Server {
 	// s.serveMux.Handle("/", http.FileServer(http.Dir("./assets/chat")))
 	s.serveMux.HandleFunc("/subscribe", s.subscribeHandler)
 	s.serveMux.HandleFunc("/profile", s.getProfileHandler)
+	s.serveMux.HandleFunc("/route", s.getRouteHandler)
 
 	go s.broadcastTaxis()
-	go s.printSubsReads()
+	// go s.printSubsReads()
 
 	return s
 }
@@ -127,6 +131,20 @@ func (server *Server) getProfileHandler(w http.ResponseWriter, r *http.Request) 
 		}
 	`
 	w.Write([]byte(fmt.Sprintf(profileTemplate, results["id"], results["slug"], results["role"], results["username"], results["full_name"], results["avatar_url"], results["phone"])))
+}
+
+func (server *Server) getRouteHandler(w http.ResponseWriter, r *http.Request) {
+	from := r.URL.Query().Get("from")
+	to := r.URL.Query().Get("to")
+
+	if from == "" || to == "" {
+		http.Error(w, "Missing 'from' or 'to' parameter", http.StatusBadRequest)
+		return
+	}
+
+	route := gmap.GetRoute(server.mapsCli, from, to)
+
+	json.NewEncoder(w).Encode(route)
 }
 
 func (server *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) {
@@ -183,7 +201,10 @@ func (server *Server) subscribeHandler(w http.ResponseWriter, r *http.Request) {
 		position:  coord,
 	}
 	if protocol == "map-admin" {
-		server.logf("Wow, you are an admin, but this is not implemented yet")
+		if server.adminSubs[id] != nil {
+			server.logf("this admin is already subscribed")
+		}
+		server.adminSubs[id] = sub
 	} else if protocol == "map-taxi" {
 		if server.taxiSubs[id] != nil {
 			server.logf("this taxi is already subscribed")
@@ -230,7 +251,7 @@ func (server *Server) deleteSubById(id uuid.UUID) {
 				delete(server.clientSubs, id)
 			}
 			if protocol == "map-admin" {
-				server.logf("Wow, you are an admin, but this is not implemented yet")
+				delete(server.adminSubs, id)
 			}
 			delete(server.connections, ws)
 			return
@@ -257,7 +278,7 @@ func subReader(ctx context.Context, server *Server, ws *websocket.Conn, l *rate.
 
 	protocols := ws.Subprotocol()
 	if strings.HasPrefix(msgString, "pos") {
-		newPosition := strings.Split(msgString, "-")[1]
+		newPosition := strings.Split(msgString, "#")[1]
 		fmt.Printf("Position recieved: %s \n", newPosition)
 		server.connectionsMu.Lock()
 		loc, err := gmap.ParseLocation(newPosition)
@@ -270,17 +291,17 @@ func subReader(ctx context.Context, server *Server, ws *websocket.Conn, l *rate.
 		server.connectionsMu.Unlock()
 	}
 
-	server.entryCha <- msgString
+	// server.entryCha <- msgString
 
 	return err
 }
 
-func (server *Server) printSubsReads() {
+/* func (server *Server) printSubsReads() {
 	for {
 		msg := <-server.entryCha
 		fmt.Println("Recieved string: ", msg)
 	}
-}
+} */
 
 func (server *Server) broadcastTaxis() {
 	ticker := time.NewTicker(2 * time.Second)
