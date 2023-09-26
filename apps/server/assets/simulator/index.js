@@ -5,9 +5,14 @@ const streamingTable = document.getElementById("streaming-table-body");
 
 const originInput = document.getElementById("origin-input");
 const destinationInput = document.getElementById("destination-input");
+const idInput = document.getElementById("id-input");
 const connectAndEmmitBtn = document.getElementById("connect-and-emmit-btn");
 const radioInputs =
   document.querySelectorAll('input[type="radio"]');
+
+  /* 
+  
+  */
 
 connectAndEmmitBtn.addEventListener("click", () => {
   let selectedRole;
@@ -22,7 +27,12 @@ connectAndEmmitBtn.addEventListener("click", () => {
     .then((data) => {
       getRoute(originInput.value, destinationInput.value)
         .then((route) => {
-          connectAndEmmit(route, selectedRole, data[0]);
+          const paramId = idInput.value;
+          let id =
+            paramId !== "" && paramId !== undefined && paramId !== null
+              ? paramId
+              : data[0];
+          connectAndEmmit(route, selectedRole, id);
         });
     });
 });
@@ -77,7 +87,7 @@ function connectAndEmmit(route, type, uuid) {
         if (typeof message !== "string") {
           return;
         }
-        const taxis = message.split("$");
+        const taxis = message.replace("taxis-", "").split("$");
         streamingTable.innerHTML = "";
         for (let taxi of taxis) {
           taxi = taxi.split("&");
@@ -108,7 +118,7 @@ function connectAndEmmit(route, type, uuid) {
           if (i === route.length - 1) {
             clearInterval(interval);
           }
-          console.log("pos");
+          console.log(route[i].latitude, route[i].longitude);
           conn.send(`pos#${route[i].latitude},${route[i].longitude}`);
           i++;
         }
@@ -122,6 +132,7 @@ const getRoute = async (startLoc, destinationLoc) => {
       `http://${location.host}/route?from=${startLoc}&to=${destinationLoc}`,
     );
     const respJson = await resp.json();
+    console.log(respJson);
     const decodedCoords = polylineDecode(
       respJson[0].overview_polyline.points,
     ).map((point, index) => ({ latitude: point[0], longitude: point[1] }));

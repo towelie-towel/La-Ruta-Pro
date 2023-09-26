@@ -118,6 +118,7 @@ func (server *Server) getProfileHandler(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		panic(err)
 	}
+	server.logf("profile", results)
 
 	const profileTemplate = `
 		{
@@ -127,10 +128,11 @@ func (server *Server) getProfileHandler(w http.ResponseWriter, r *http.Request) 
 			"username": "%v",
 			"full_name": "%v",
 			"avatar_url": "%v",
+			"cover_img_url": "%v",
 			"phone": "%v"	
 		}
 	`
-	w.Write([]byte(fmt.Sprintf(profileTemplate, results["id"], results["slug"], results["role"], results["username"], results["full_name"], results["avatar_url"], results["phone"])))
+	w.Write([]byte(fmt.Sprintf(profileTemplate, results["id"], results["slug"], results["role"], results["username"], results["full_name"], results["avatar_url"], results["cover_img_url"], results["phone"])))
 }
 
 func (server *Server) getRouteHandler(w http.ResponseWriter, r *http.Request) {
@@ -317,10 +319,12 @@ func (server *Server) broadcastTaxis() {
 				taxiPositionSlice = append(taxiPositionSlice, posAndId)
 			}
 			taxiPositionString := strings.Join(taxiPositionSlice, "$")
+			server.logf("sending message to clients")
 			for _, sub := range server.clientSubs {
-				err := sub.conn.Write(context.Background(), websocket.MessageText, []byte(taxiPositionString))
+				err := sub.conn.Write(context.Background(), websocket.MessageText, []byte("taxis-"+taxiPositionString))
 				if err != nil {
 					server.logf("failed to send taxi positions to client connection: %v", err)
+					delete(server.clientSubs, sub.id)
 				}
 			}
 		}

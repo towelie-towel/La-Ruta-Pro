@@ -1,5 +1,5 @@
 import React, { useRef, useCallback, useEffect, memo } from 'react'
-import { Animated, Dimensions, Easing } from 'react-native';
+import { Animated, Dimensions, Easing, Platform } from 'react-native';
 import type { MapMarkerProps } from 'react-native-maps';
 import { AnimatedRegion, MarkerAnimated, type MapMarker } from 'react-native-maps';
 
@@ -28,27 +28,40 @@ const AnimatedMarker: React.FC<AnimatedMarkerParams> = ({ latitude, longitude, h
     }))
 
     const animateTo = useCallback((toLatitude: number, toLongitude: number, heading: number) => {
-        anim_marker_coords_ref.current.timing({
-            latitude: toLatitude,
-            longitude: toLongitude,
-            duration: 2000,
-            easing: Easing.linear,
-            toValue: 0,
-            useNativeDriver: false,
-            latitudeDelta: 0,
-            longitudeDelta: 0,
-        }).start();
-
-        Animated.timing(animatedHeading, {
-            toValue: heading,
-            duration: 100,
-            useNativeDriver: true
-        }).start();
+            if (Platform.OS === 'android') {
+                if (anim_marker_ref) {
+                    anim_marker_ref.current?.animateMarkerToCoordinate(
+                        {
+                            latitude: toLatitude,
+                            longitude: toLongitude,
+                        },
+                        2000,
+                    );
+                }
+            } else {
+                anim_marker_coords_ref.current.timing({
+                    duration: 2000,
+                    easing: Easing.linear,
+                    toValue: 0,
+                    useNativeDriver: false,
+                    latitudeDelta: 0,
+                    longitudeDelta: 0,
+                    latitude: toLatitude,
+                    longitude: toLongitude,
+                }).start();
+            }
+            if (heading) {
+                Animated.timing(animatedHeading, {
+                    toValue: heading,
+                    duration: 100,
+                    useNativeDriver: true
+                }).start();
+            }
     }, [animatedHeading])
 
     useEffect(() => {
         animateTo(latitude, longitude, heading)
-    }, [latitude, longitude, animateTo, headingAnimated ? heading : undefined])
+    }, [latitude, longitude, animateTo, heading])
 
     return (
         <MarkerAnimated

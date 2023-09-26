@@ -26,9 +26,11 @@ import SelectMarkerIcon from '~/components/map/SelectMarkerIcon';
 import AnimatedRouteMarker from '~/components/map/AnimatedRouteMarker';
 import BottomSheet from '~/components/containers/BottomSheeetModal';
 import NavigationMenu from '~/components/containers/NavigationMenu';
-import SearchBar from '../map/SearchBar';
+import SearchBar from '../containers/SearchBar';
 import type { DrawerParamList } from '~/app';
 import { polylineDecode } from '~/utils/helpers';
+import TaxiMarkers from '../map/TaxiMarkers';
+import type { GooglePlacesAutocompleteRef } from '../map/lib/GooglePlacesAutocomplete';
 
 /* 
     
@@ -45,64 +47,46 @@ const MapViewComponent = ({ navigation }: { navigation: DrawerNavigationProp<Dra
     const { width, height } = Dimensions.get('window');
     const { isConnected, isInternetReachable } = NetInfo.useNetInfo();
 
+    // navigator bubbles
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isMenuVisible, setIsMenuVisible] = useState(true)
     const navigationAnimValue = useRef(new Animated.Value(0)).current;
 
     const [isAddingMarker, setIsAddingMarker] = useState(false);
 
+    // map & markers
     const mapViewRef = useRef<MapView>(null);
-    // const userMarkerRef = useRef<MapMarker>(null);
     const [userMarkers, setUserMarkers] = useAtom(userMarkersAtom)
 
+    // bottom sheet
     const [userSelected, setUserSelected] = useState(true);
-    const [selectedMarkerIndex, setSelectedMarkerIndex] = useState<number | null>(null);
+    const [selectedTaxiId, setSelectedTaxiId] = useState<string | null>(null);
     const bottomSheetModalRef = useRef<BottomSheetModal>(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
 
-    const [activeRoute, setActiveRoute] = useState<LatLng[] | null>(null)
+    // search bar
+    const placesInputViewRef = useRef<GooglePlacesAutocompleteRef | null>(null);
+    const [activeRoute, setActiveRoute] = useState<LatLng[] | null | undefined>(null)
 
-    /* useEffect(() => {
-        if (selectedMarkerIndex !== null && mapViewRef.current) {
-            const selectedMarker = markers[selectedMarkerIndex];
-            if (selectedMarker) {
-                mapViewRef.current.animateToRegion({
-                    longitude: selectedMarker.coordinate.longitude,
-                    latitude: selectedMarker.coordinate.latitude,
-                    latitudeDelta: 0.009,
-                    longitudeDelta: 0.009,
-                });
-            }
+    const onSearchBarFocus = () => {
+        console.log("places input focus")
+        LayoutAnimation.linear()
+        setIsMenuVisible(false)
+        if (isMenuOpen) {
+
+            Animated.spring(navigationAnimValue, {
+                toValue: 0,
+                friction: 5,
+                useNativeDriver: true,
+            }).start()
         }
+    }
 
-    }, [markers, selectedMarkerIndex]); */
-
-    /* const animateToRegion = useCallback((region: Region) => {
-        mapViewRef.current && mapViewRef.current.animateToRegion(region)
-    }, []) */
-
-    /* const handlePresentModal = useCallback(() => {
-        bottomSheetModalRef.current?.present();
-        setIsModalVisible(true);
-    }, []) */
-
-    /* const handleMarkerPress = useCallback((index: number) => {
-        setUserSelected(false);
-        setSelectedMarkerIndex(index);
-
-        handlePresentModal();
-
-        const marker = markers[index];
-
-        if (marker) {
-            animateToRegion({
-                latitude: marker.coordinate.latitude,
-                longitude: marker.coordinate.longitude,
-                longitudeDelta: 0.0033333,
-                latitudeDelta: 0.0033333,
-            });
-        }
-    }, [animateToRegion, handlePresentModal, markers]); */
+    const onSearchBarBlur = () => {
+        console.log("places input blur")
+        LayoutAnimation.linear()
+        setIsMenuVisible(true)
+    }
 
     const toggleNavMenu = useCallback(() => {
         const toValue = isMenuOpen ? 0 : 1
@@ -161,7 +145,17 @@ const MapViewComponent = ({ navigation }: { navigation: DrawerNavigationProp<Dra
         bottomSheetModalRef.current?.present();
         setUserSelected(true)
         setIsModalVisible(true);
-        setSelectedMarkerIndex(null);
+        setSelectedTaxiId(null);
+        if (isMenuOpen) {
+            toggleNavMenu()
+        }
+    }, [isMenuOpen, toggleNavMenu])
+
+    const touchTaxiHandler = useCallback((userId: string) => {
+        bottomSheetModalRef.current?.present();
+        setUserSelected(false)
+        setIsModalVisible(true);
+        setSelectedTaxiId(userId);
         if (isMenuOpen) {
             toggleNavMenu()
         }
@@ -180,6 +174,9 @@ const MapViewComponent = ({ navigation }: { navigation: DrawerNavigationProp<Dra
                 <MapView
                     onTouchMove={() => {
                         // _fadeOutNav()
+                    }}
+                    onTouchStart={() => {
+                        placesInputViewRef.current?.blur()
                     }}
                     onTouchEnd={() => {
                         // _fadeInNav()
@@ -205,23 +202,6 @@ const MapViewComponent = ({ navigation }: { navigation: DrawerNavigationProp<Dra
                     customMapStyle={colorScheme === 'dark' ? NightMap : undefined}
                 >
 
-                    {/* {markers.map((marker: MarkerData, index: number) => {
-                        return (
-                                <React.Fragment
-                                    key={index}
-                                >
-
-                                    <CarMarker
-                                        onPress={() => handleMarkerPress(index)}
-                                        coordinate={marker.coordinate}
-                                        description=''
-                                        title=''
-                                        imageURL=''
-                                    />
-                                </React.Fragment>
-                        )
-                    })} */}
-
                     {
                         userMarkers.map((userMarker, index) => {
                             return (
@@ -239,14 +219,24 @@ const MapViewComponent = ({ navigation }: { navigation: DrawerNavigationProp<Dra
 
                     <Polyline
                         coordinates={activeRoute ?? []}
-                        strokeColor="white"
-                        strokeWidth={5}
+                        /* strokeColor="white" */
+                        /* strokeWidth={5} */
+                        strokeColor="#000" // fallback for when `strokeColors` is not supported by the map-provider
+                        strokeColors={[
+                            '#7F0000',
+                            '#00000000', // no color, creates a "long" gradient between the previous and next coordinate
+                            '#B24112',
+                            '#E5845C',
+                            '#238C23',
+                            '#7F0000'
+                        ]}
+                        strokeWidth={6}
                     />
 
-                    <Circle center={{
+                    {/* <Circle center={{
                         longitude: -82.38052,
                         latitude: 23.11848
-                    }} radius={200} />
+                    }} radius={200} /> */}
 
                     <AnimatedRouteMarker />
 
@@ -257,40 +247,44 @@ const MapViewComponent = ({ navigation }: { navigation: DrawerNavigationProp<Dra
                         userId=''
                     />
 
+                    <TaxiMarkers
+                        onSelectTaxi={touchTaxiHandler}
+                        description=''
+                        title=''
+                        userId=''
+                    />
+
                 </MapView>
 
 
-                <SearchBar navigation={navigation} onPlacePress={async (data, details) => {
-                    // just use the directions api
-                    const apiKey = 'AIzaSyAtcwUbA0jjJ6ARXl5_FqIqYcGbTI_XZEE';
-                    let url = 'https://maps.googleapis.com/maps/api/directions/json';
-
-
-                    if (!details) {
-                        return
-                    }
-
-                    const position = await getCurrentPositionAsync({
-                        accuracy: Accuracy.Highest,
-                    })
-
-                    url += `?destination=place_id:${data.place_id}`
-                    url += `&origin=${position.coords.latitude}%2C${position.coords.longitude}`
-                    url += `&key=${apiKey}`
-                    url += `&language=es`
-
-                    try {
-                        const res = await fetch(url)
-                        const json = await res.json()
-                        setActiveRoute((polylineDecode(json.routes[0].overview_polyline.points) ?? []).map(([lat, lng]) => ({ latitude: lat, longitude: lng })))
-                        console.log(JSON.stringify({ activeRoute }, null, 2))
-                    } catch (error) {
-                        if (error instanceof Error) {
-                            console.error(error.message)
+                <SearchBar 
+                    refFor={(ref) => (placesInputViewRef.current = ref)}
+                    onFocus={onSearchBarFocus} 
+                    onBlur={onSearchBarBlur} 
+                    navigation={navigation} 
+                    onPlacePress={async (data, details) => {
+                        if (!details) {
+                            return
                         }
-                    }
-
-                }} />
+                        const position = await getCurrentPositionAsync({
+                            accuracy: Accuracy.Highest,
+                        })
+                        try {
+                            const resp = await fetch(
+                                `http://192.168.1.103:6942/route?from=${position.coords.latitude},${position.coords.longitude}&to=${details.geometry.location.lat},${details.geometry.location.lng}`,
+                            );
+                            const respJson = await resp.json();
+                            const decodedCoords = polylineDecode(
+                                respJson[0].overview_polyline.points,
+                            ).map((point) => ({ latitude: point[0]!, longitude: point[1]! }));
+                            setActiveRoute(decodedCoords)
+                        } catch (error) {
+                            if (error instanceof Error) {
+                                console.error(error.message)
+                            }
+                        }
+                    }} 
+                />
 
                 {
                     isAddingMarker &&
@@ -313,7 +307,7 @@ const MapViewComponent = ({ navigation }: { navigation: DrawerNavigationProp<Dra
                 <BottomSheet
                     bottomSheetModalRef={bottomSheetModalRef}
                     userSelected={userSelected}
-                    selectedMarkerIndex={selectedMarkerIndex}
+                    selectedTaxiId={selectedTaxiId}
                     isVisible={isModalVisible}
                     setIsVisible={setIsModalVisible}
                 />

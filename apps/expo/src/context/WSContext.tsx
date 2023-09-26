@@ -1,21 +1,41 @@
- 
-import { useEffect, useRef,  useState } from 'react'
-import * as ExpoLocation from 'expo-location';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react'
 import NetInfo from '@react-native-community/netinfo';
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { atomWithStorage, createJSONStorage } from 'jotai/utils'
+import * as ExpoLocation from 'expo-location';
+import type { MarkerData, WSTaxi } from '~/constants/Markers';
 
-import type { WSTaxi, MarkerData } from '~/constants/Markers';
-import { useUser } from '~/context/UserContext';
+const storedIsFirstTime = createJSONStorage<boolean>(() => AsyncStorage)
+export const isFirstTimeAtom = atomWithStorage<boolean>('isFirstTime', true, storedIsFirstTime)
 
-// 🔓🔒🗡️💣🔫🔪📴📳📲💻🖥️
-// 📸📷📺🎬🎥📽️💡🕯️🔎🔍🔦
-// 📃🔖🏷️💰💵📨📦📪📭📬📫
-// 📁📂💼📌📈📉⌛⏲️🕰️⏱️⏰
-// 🎭🪄🔮🎲🔨⛏️⚒️🛠️🔧🪛🔩
-// 🎶🎵🗑️🪠🧻🚽🛁🚿🎯🌀🌬️
-// ⚡🔥❄️🌊💧💨💦💥💫🕳️♻️
-// ❌🆘⛔⭕🔞📵🚭🚫☢️❗☣️
+interface WSContext {
+    taxis: MarkerData[],
+    ws: WebSocket | null | undefined,
+    wsTaxis: WSTaxi[] | undefined,
+    position: ExpoLocation.LocationObject | undefined,
+    heading: ExpoLocation.LocationHeadingObject | undefined,
+    resetConnection: (() => Promise<void>),
+    trackPosition: (() => Promise<void>)
+}
 
-const useMapConnection = () => {
+const initialValue: WSContext = {
+    taxis: [],
+    ws: undefined,
+    wsTaxis: undefined,
+    position: undefined,
+    heading: undefined,
+    resetConnection: async () => { throw new Error("Function not initizaliced yet") },
+    trackPosition: async () => { throw new Error("Function not initizaliced yet") }
+}
+
+const WSContext = createContext(initialValue)
+
+export const useWSConnection = () => {
+    return useContext(WSContext);
+}
+
+export const WSProvider = ({ children }: { children: React.ReactNode }) => {
+
     const [wsTaxis, setWsTaxis] = useState<WSTaxi[]>([]);
     const [taxis, setTaxis] = useState<MarkerData[]>([]);
     const [heading, setHeading] = useState<ExpoLocation.LocationHeadingObject>();
@@ -152,65 +172,53 @@ const useMapConnection = () => {
             } else {
                 console.error("🪠 resetConnection ==> ws.current.readyState = \"CONNECTING\" || \"CLOSING\" ", JSON.stringify(ws.current, null, 2))
                 // TODO: handle CONNECTING and CLOSING cases
-            } 
+            }
 
         } catch (error) {
             console.error(error)
         }
     }
 
-    return {
-        taxis,
-        ws,
-        wsTaxis,
-        sendStringToServer,
-        position,
-        heading,
-        handleWebSocketMessage,
-        resetConnection,
-        trackPosition
-    }
+
+    useEffect(() => {
+        if (!positionSubscription.current) {
+            console.log("📭 <== useEffect ==> WSContext.tsx ==> [] (📌trackPosition) ")
+            void trackPosition()
+        }
+        if (!headingSubscription.current) {
+            console.log("📭 <== useEffect ==> WSContext.tsx ==> [] (📌trackHeading) ")
+            void trackHeading()
+        }
+
+        return () => {
+            console.log("📪 <== useEffect-return ==> WSContext.tsx ==> [] (🔪position/heading subscriptions)")
+            if (positionSubscription.current) {
+                positionSubscription.current.remove()
+                positionSubscription.current = null
+            }
+            if (headingSubscription.current) {
+                headingSubscription.current.remove()
+                headingSubscription.current = null
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        console.log("📭 <== useEffect ==> WSContext.tsx ==> [isConnected] (📈resetConnection)")
+        void resetConnection()
+    }, [isConnected]);
+
+    return (
+        <WSContext.Provider value={{
+            taxis,
+            ws: ws.current,
+            wsTaxis,
+            position,
+            heading,
+            resetConnection,
+            trackPosition
+        }}>
+            {children}
+        </WSContext.Provider>
+    )
 }
-
-export default useMapConnection
-
-
-/* CREATE TABLE Location (
-    id INT PRIMARY KEY,
-    latitude FLOAT NOT NULL,
-    longitude FLOAT NOT NULL,
-    timestamp TIMESTAMP NOT NULL,
-    accuracy FLOAT,
-    altitude FLOAT,
-    altitudeAccuracy FLOAT,
-    heading FLOAT,
-    speed FLOAT
-);
-
-CREATE TABLE Marker (
-    id INT PRIMARY KEY,
-    location_id INT NOT NULL,
-    title VARCHAR(255) NOT NULL,
-    description TEXT NOT NULL,
-    imageURL TEXT NOT NULL,
-    FOREIGN KEY (location_id) REFERENCES Location(id)
-);
-
-CREATE TABLE Profile (
-    id INT PRIMARY KEY,
-    userId VARCHAR(255),
-    marker_id INT,
-    phone_number VARCHAR(255),
-    email VARCHAR(255),
-    userName VARCHAR(255),
-    alias VARCHAR(255),
-    profile_identifier VARCHAR(255) UNIQUE NOT NULL,
-    userRole VARCHAR(255) DEFAULT 'client',
-    licenceNo VARCHAR(255),
-    taxi_category VARCHAR(255),
-    taxi_start FLOAT(2) CHECK (taxi_start >= 1 AND taxi_start <= 5),
-    active BOOLEAN DEFAULT false,
-    last_location_id INT NOT NULL,
-    FOREIGN KEY (last_location_id) REFERENCES Location(id),
-    FOREIGN KEY (marker_id) REFERENCES Marker(id)
-); */

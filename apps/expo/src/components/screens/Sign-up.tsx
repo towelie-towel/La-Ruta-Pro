@@ -17,12 +17,14 @@ import { View } from '~/components/shared/Themed';
 import { PressBtn } from '~/components/shared/PressBtn';
 import Colors from '~/constants/Colors';
 import { isValidPassword, isValidPhone, isValidUsername } from '~/utils/auth';
+import { useUser } from '~/context/UserContext';
 
 export default function SignUp({ navigation }: { navigation?: DrawerNavigationProp<DrawerParamList> }) {
 
     const colorScheme = useColorScheme()
     const pathName = usePathname()
     const { replace } = useRouter()
+    const {isSignedIn} = useUser()
     const isOnSignUpRoute = pathName.includes("sign-up")
 
     const [isLoading, setIsLoading] = useState(false)
@@ -146,7 +148,7 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
                     alt='Tu-Ruta Logo'
                     className='h-16 w-14 max-[367px]:h-12 max-[367px]:w-12 max-[340px]:h-12 max-[340px]:w-10 max-[367px]:my-0'
                 />
-                <Text numberOfLines={1} adjustsFontSizeToFit className='mt-4 dark:text-white font-bold text-3xl text-center max-[367px]:text-2xl'>Bienvenido</Text>
+                <Text numberOfLines={1} adjustsFontSizeToFit className='mt-4 dark:text-white font-bold text-3xl text-center max-[367px]:text-2xl'>Bienvenida</Text>
             </View>
 
             {!pendingVerification && !isPhoneVerified && (
@@ -275,32 +277,44 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
                 </View>
             )}
 
-            <PressBtn
-                disabled={otpToken.length < 5 && pendingVerification || isLoading}
-                onPress={() => pendingVerification ? verifyOtp() : sendOTP()}
-                className={'w-[200px] align-text-bottom max-[367px]:w-[180px] max-w-[280px] bg-[#FCCB6F] dark:bg-white rounded-3xl h-12 max-[367px]:h-8 flex-row justify-center items-center'}
-            >
-                <Text className={'text-white dark:text-black text-lg max-[367px]:text-base font-bold mr-3'}>{pendingVerification ? "Verificar" : "Registrar"}</Text>
-                {isLoading && <ActivityIndicator
-                    size={'small'}
-                    animating
-                    color={colorScheme === 'light' ? 'white' : 'black'}
-                />}
-            </PressBtn>
+            {
+                isSignedIn &&
+                <>
+                
+                </>
+            }
 
-            <PressBtn
-                className={'flex-row items-center justify-center mt-4'}
-                onPress={() => {
-                    if (isOnSignUpRoute) {
-                        replace('auth/sign-in')
-                    } else {
-                        navigation?.navigate('Sign-In')
-                    }
-                }}
-            >
-                <Text className={'text-sm max-[367px]:text-xs font-light dark:text-gray-400'}>Ya Tienes Cuenta?</Text>
-                <Text className={'text-[#2e78b7] font-normal ml-1 text-sm max-[367px]:text-xs'}>Inicia Sesión</Text>
-            </PressBtn>
+            {
+            !isSignedIn && 
+                <>
+                    <PressBtn
+                        disabled={otpToken.length < 5 && pendingVerification || isLoading}
+                        onPress={() => pendingVerification ? verifyOtp() : sendOTP()}
+                        className={'w-[200px] align-text-bottom max-[367px]:w-[180px] max-w-[280px] bg-[#FCCB6F] dark:bg-white rounded-3xl h-12 max-[367px]:h-8 flex-row justify-center items-center'}
+                    >
+                        <Text className={'text-white dark:text-black text-lg max-[367px]:text-base font-bold mr-3'}>{pendingVerification ? "Verificar" : "Registrar"}</Text>
+                        {isLoading && <ActivityIndicator
+                            size={'small'}
+                            animating
+                            color={colorScheme === 'light' ? 'white' : 'black'}
+                        />}
+                    </PressBtn>
+
+                    <PressBtn
+                        className={'flex-row items-center justify-center mt-4'}
+                        onPress={() => {
+                            if (isOnSignUpRoute) {
+                                replace('auth/sign-in')
+                            } else {
+                                navigation?.navigate('Sign-In')
+                            }
+                        }}
+                    >
+                        <Text className={'text-sm max-[367px]:text-xs font-light dark:text-gray-400'}>Ya Tienes Cuenta?</Text>
+                        <Text className={'text-[#2e78b7] font-normal ml-1 text-sm max-[367px]:text-xs'}>Inicia Sesión</Text>
+                    </PressBtn>
+                </>
+            }
         </View>
     );
 }

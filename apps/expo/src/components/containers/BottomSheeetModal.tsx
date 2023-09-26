@@ -1,4 +1,4 @@
-import React, { memo, useState } from 'react';
+import React, { memo, useEffect, useState } from 'react';
 import {
     Image,
     Animated,
@@ -26,6 +26,7 @@ import { userMarkersAtom } from '~/components/map/SelectMarkerIcon';
 import AbsoluteDropdown from '~/components/shared/AbsoluteDropdown';
 import { isFirstTimeAtom } from '~/context/UserContext';
 import AbsoluteLoading from '../shared/AbsoluteLoading';
+import { polylineDecode } from '~/utils/helpers';
 
 void Image.prefetch("https://lh3.googleusercontent.com/a/AAcHTtfPgVic8qF8hDw_WPE80JpGOkKASohxkUA8y272Ow=s1000-c")
 
@@ -87,9 +88,9 @@ const renderTabsScene = SceneMap({
     markers: MarkersProfileTab,
 });
 
-const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, setIsVisible }: {
+const BottomSheet = ({ bottomSheetModalRef, selectedTaxiId, userSelected, setIsVisible }: {
     bottomSheetModalRef: React.RefObject<BottomSheetModalMethods>,
-    selectedMarkerIndex: number | null,
+    selectedTaxiId: string | null,
     userSelected: boolean,
     isVisible: boolean,
     setIsVisible: React.Dispatch<React.SetStateAction<boolean>>,
@@ -106,6 +107,17 @@ const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, s
         { key: 'discober', title: 'Descubre' },
         { key: 'markers', title: 'Marcadores' },
     ]);
+
+    useEffect(() => {
+        const fetchTaxi = async () => {
+            const resp = await fetch(
+                `http://192.168.1.103:6942/profile?id=${selectedTaxiId}`,
+            );
+            const respJson = await resp.json();
+            console.log(respJson);
+        }
+        void fetchTaxi();
+    }, [])
 
     return (
         <BottomSheetModal
@@ -127,7 +139,7 @@ const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, s
         >
             <View className={'w-full h-full rounded-t-3xl overflow-hidden'}>
 
-                {selectedMarkerIndex !== null && !userSelected && (
+                {selectedTaxiId !== null && !userSelected && (
                     <View className='w-full h-full'>
 
                         <Animated.Image
@@ -256,7 +268,7 @@ const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, s
                     </View>
                 )}
 
-                {(!isSignedIn && selectedMarkerIndex === null) &&
+                {(!isSignedIn && selectedTaxiId === null) &&
                     <View
                         className='w-full bg-transparent justify-center items-center'
                         style={{
@@ -276,7 +288,7 @@ const BottomSheet = ({ bottomSheetModalRef, selectedMarkerIndex, userSelected, s
                                     </Text>
                                     <Link
                                         href={'/auth/sign-in'}
-                                        className={'h-12 max-[367px]:h-8 max-[768px]:h-10 w-[200px] max-[367px]:w-[160px] max-[768px]:w-[180px] bg-[#FCCB6F] dark:bg-white rounded-3xl justify-center items-center text-center'}
+                                        className={'pt-1 h-12 max-[367px]:h-8 max-[768px]:h-10 w-[200px] max-[367px]:w-[160px] max-[768px]:w-[180px] bg-[#FCCB6F] dark:bg-white rounded-3xl justify-center items-center text-center'}
                                     >
                                         <Text darkColor="black" className={'text-white dark:text-black font-bold text-lg max-[367px]:text-base'}>
                                             {isFirstTime ? "Sign Up" : "Sign In"}

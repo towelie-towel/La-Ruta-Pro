@@ -5,11 +5,11 @@ import { useColorScheme } from 'nativewind'
 
 import AnimatedMarker from '~/components/map/AnimatedMarker'
 import Colors from '~/constants/Colors';
-import useMapConnection from '~/hooks/useMapConnection';
+import { useWSConnection } from '~/context/WSContext';
 
 const UserMarker = ({ description, title, userId, ...props }: { description: string, title: string, userId: string } & Omit<MapMarkerProps, "coordinate">) => {
     const { colorScheme } = useColorScheme();
-    const { position, heading } = useMapConnection()
+    const { position, heading } = useWSConnection();
 
     if (!position || !heading) {
         return

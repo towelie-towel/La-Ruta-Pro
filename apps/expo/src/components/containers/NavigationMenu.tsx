@@ -10,6 +10,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 
 import { PressBtn } from '~/components/shared/PressBtn';
 import Colors from '~/constants/Colors';
+import { useWSConnection } from '~/context/WSContext';
 
 interface NavigationMenuParams {
     navigationAnimValue: Animated.Value,
@@ -24,6 +25,7 @@ const NavigationMenu: React.FC<NavigationMenuParams> = ({ navigationAnimValue, t
 
     const { colorScheme } = useColorScheme();
     const { width, height } = Dimensions.get('window');
+    const { resetConnection, trackPosition } = useWSConnection();
 
     return (
         <Animated.View
@@ -53,7 +55,11 @@ const NavigationMenu: React.FC<NavigationMenuParams> = ({ navigationAnimValue, t
                     }}
                 >
                     <PressBtn
-                        onPress={taxiBtnHandler}
+                        onPress={()=> {
+                            void resetConnection();
+                            void trackPosition();
+                            taxiBtnHandler();
+                        }}
                         className={'h-14 w-14 justify-center items-center rounded-full border-[1.5px] border-zinc-500'}
                     >
                         <MaterialIcons

@@ -19,6 +19,12 @@ export interface MarkerData {
     icon?: string[];
 }
 
+export interface WSTaxi {
+    latitude: number;
+    longitude: number;
+    userId: string;
+}
+
 export const initialMarkers: MarkerData[] = [
     {
         coordinate: {

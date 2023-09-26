@@ -60,7 +60,7 @@ export default function SignIn({ navigation }: { navigation?: DrawerNavigationPr
                     display: isReduced ? 'none' : 'flex',
                 }}
             >
-                <Text numberOfLines={2} adjustsFontSizeToFit className='font-bold text-3xl text-center max-[367px]:text-2xl'>Bienvenido Otra Vez</Text>
+                <Text numberOfLines={2} adjustsFontSizeToFit className='font-bold text-3xl text-center max-[367px]:text-2xl'>Bienvenida Otra Vez</Text>
                 <Image
                     source={require('../../../assets/Logo.png')}
                     alt='Tu-Ruta Logo'
