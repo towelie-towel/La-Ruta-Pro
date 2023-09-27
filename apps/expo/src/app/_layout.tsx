@@ -51,7 +51,7 @@ const RootLayout = () => {
                 headerStyle: {
                   backgroundColor: colorScheme === 'dark' ? 'black' : 'white',
                 }, */
-                presentation: "transparentModal",
+                /* presentation: "transparentModal", */
               }}
             />
             <Stack.Screen
@@ -62,7 +62,7 @@ const RootLayout = () => {
                 headerStyle: {
                   backgroundColor: colorScheme === 'dark' ? 'black' : 'white',
                 }, */
-                presentation: "transparentModal",
+                /* presentation: "transparentModal", */
               }}
             />
           </Stack>

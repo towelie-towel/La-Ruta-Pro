@@ -10,6 +10,7 @@ import { Stack, usePathname, useRouter } from 'expo-router';
 import { type DrawerNavigationProp } from '@react-navigation/drawer';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import Popover from 'react-native-popover-view';
 
 import { supabase } from '~/lib/supabase'
 import { type DrawerParamList } from '~/app';
@@ -153,35 +154,38 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
 
             {!pendingVerification && !isPhoneVerified && (
                 <View className='w-2/3 items-center justify-center gap-4 my-6'>
-                    <View className='w-full flex-row justify-center items-center'>
-                        <View className='relative w-full flex-row justify-center items-center'>
-                            <View className='h-12 w-[20%] border border-r-0 rounded-l border-gray-300 dark:border-gray-600 dark:bg-transparent justify-center items-center'>
-                                <Text className='text-gray-500 dark:text-slate-500'>+53</Text>
-                            </View>
-                            <TextInput
-                                className={'h-12 w-[80%] pl-4 pr-10 border rounded-r border-gray-300 dark:border-gray-600 dark:bg-transparent text-gray-500 dark:text-slate-500'}
-                                placeholder="Número de Móvil"
-                                autoCapitalize="none"
-                                keyboardType='numeric'
-                                placeholderTextColor={colorScheme === 'dark' ? "rgb(107 114 128)" : "rgb(100 116 139)"}
-                                onChangeText={setPhoneNumber}
-                                value={phoneNumber}
-
-                                onFocus={() => {
-                                    reduceLogo()
-                                }}
-                            />
-                            {
-                                phoneError &&
-                                <View className='absolute right-2 my-auto'>
-                                    <MaterialIcons
-                                        name='error'
-                                        size={24}
-                                        color={Colors[colorScheme ?? 'light'].text}
-                                    />
-                                </View>
-                            }
+                    <View className='relative w-full flex-row justify-center items-center'>
+                        <View className='h-12 w-[20%] border border-r-0 rounded-l border-gray-300 dark:border-gray-600 dark:bg-transparent justify-center items-center'>
+                            <Text className='text-gray-500 dark:text-slate-500'>+53</Text>
                         </View>
+                        <TextInput
+                            className={'h-12 w-[80%] pl-4 pr-10 border rounded-r border-gray-300 dark:border-gray-600 dark:bg-transparent text-gray-500 dark:text-slate-500'}
+                            placeholder="Número de Móvil"
+                            autoCapitalize="none"
+                            keyboardType='numeric'
+                            placeholderTextColor={colorScheme === 'dark' ? "rgb(107 114 128)" : "rgb(100 116 139)"}
+                            onChangeText={setPhoneNumber}
+                            value={phoneNumber}
+
+                            onFocus={() => {
+                                reduceLogo()
+                            }}
+                        />
+                        {
+                            phoneError &&
+                            <View className='absolute right-2 my-auto'>
+                                <Popover
+                                    from={(
+                                        <MaterialIcons
+                                            name='error'
+                                            size={24}
+                                            color={Colors[colorScheme ?? 'light'].text}
+                                        />
+                                    )}>
+                                    <Text>{phoneError}</Text>
+                                </Popover>
+                            </View>
+                        }
                     </View>
                     <View className={'relative w-full justify-center items-center'}>
                         <TextInput
