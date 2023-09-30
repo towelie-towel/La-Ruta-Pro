@@ -25,7 +25,7 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
     const colorScheme = useColorScheme()
     const pathName = usePathname()
     const { replace } = useRouter()
-    const {isSignedIn} = useUser()
+    const {isSignedIn, isLoading: isAuthLoading} = useUser()
     const isOnSignUpRoute = pathName.includes("sign-up")
 
     const [isLoading, setIsLoading] = useState(false)
@@ -289,6 +289,17 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
             }
 
             {
+                isAuthLoading &&
+                <>
+                    <ActivityIndicator
+                        size={'small'}
+                        animating
+                        color={colorScheme === 'light' ? 'black' : 'white'}
+                    />
+                </>
+            }
+
+            {
             !isSignedIn && 
                 <>
                     <PressBtn
@@ -308,7 +319,7 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
                         className={'flex-row items-center justify-center mt-4'}
                         onPress={() => {
                             if (isOnSignUpRoute) {
-                                replace('auth/sign-in')
+                                replace('sign-in')
                             } else {
                                 navigation?.navigate('Sign-In')
                             }

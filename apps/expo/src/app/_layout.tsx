@@ -52,7 +52,8 @@ const RootLayout = () => {
                   backgroundColor: colorScheme === 'dark' ? 'black' : 'white',
                 }, */
                 /* presentation: "transparentModal", */
-              }}
+              }} 
+              redirect={true} 
             />
             <Stack.Screen
               name="auth/sign-up"
@@ -64,6 +65,7 @@ const RootLayout = () => {
                 }, */
                 /* presentation: "transparentModal", */
               }}
+              redirect={true} 
             />
           </Stack>
         </SafeAreaProvider>

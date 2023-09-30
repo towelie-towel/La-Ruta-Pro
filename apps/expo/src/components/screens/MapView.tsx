@@ -143,6 +143,7 @@ const MapViewComponent = ({ navigation }: { navigation: DrawerNavigationProp<Dra
 
     const openUserProfileHandler = useCallback(() => {
         bottomSheetModalRef.current?.present();
+        console.log("aaa");
         setUserSelected(true)
         setIsModalVisible(true);
         setSelectedTaxiId(null);
@@ -310,6 +311,7 @@ const MapViewComponent = ({ navigation }: { navigation: DrawerNavigationProp<Dra
                     selectedTaxiId={selectedTaxiId}
                     isVisible={isModalVisible}
                     setIsVisible={setIsModalVisible}
+                    navigation={navigation} 
                 />
 
 

@@ -91,7 +91,7 @@ const NavigationMenu: React.FC<NavigationMenuParams> = ({ navigationAnimValue, t
                 >
                     <PressBtn
                         className={'h-14 w-14 justify-center items-center rounded-full border-[1.5px] border-zinc-500'}
-                        onPress={openUserProfileHandler}
+                        callback={openUserProfileHandler}
                     >
                         <MaterialIcons
                             name={'account-circle'}

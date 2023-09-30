@@ -7,8 +7,6 @@ import {
     LayoutAnimation,
     ActivityIndicator
 } from "react-native";
-import {
-} from '@react-navigation/drawer';
 import { Link } from 'expo-router';
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { useAtom, } from 'jotai';
@@ -16,6 +14,7 @@ import { useColorScheme } from 'nativewind';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import { type BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
 
 import { useUser } from '~/context/UserContext';
 import { View, Text } from '~/components/shared/Themed';
@@ -27,6 +26,7 @@ import AbsoluteDropdown from '~/components/shared/AbsoluteDropdown';
 import { isFirstTimeAtom } from '~/context/UserContext';
 import AbsoluteLoading from '../shared/AbsoluteLoading';
 import { polylineDecode } from '~/utils/helpers';
+import type { DrawerParamList } from '~/app';
 
 void Image.prefetch("https://lh3.googleusercontent.com/a/AAcHTtfPgVic8qF8hDw_WPE80JpGOkKASohxkUA8y272Ow=s1000-c")
 
@@ -69,11 +69,13 @@ const MarkersProfileTab = () => {
                                     void setUserMarkers(userMarkers.filter(marker => marker.id !== item.id))
                                 }}
                             >
-                                <MaterialCommunityIcons
-                                    name={'trash-can'}
-                                    size={28}
-                                    color={Colors[colorScheme ?? 'light'].text}
-                                />
+                                <View>
+                                    <MaterialCommunityIcons
+                                        name={'trash-can'}
+                                        size={28}
+                                        color={Colors[colorScheme ?? 'light'].text}
+                                    />
+                                </View>
                             </PressBtn>
                         </View>
                     )}
@@ -88,12 +90,13 @@ const renderTabsScene = SceneMap({
     markers: MarkersProfileTab,
 });
 
-const BottomSheet = ({ bottomSheetModalRef, selectedTaxiId, userSelected, setIsVisible }: {
+const BottomSheet = ({ bottomSheetModalRef, selectedTaxiId, userSelected, setIsVisible, navigation }: {
     bottomSheetModalRef: React.RefObject<BottomSheetModalMethods>,
     selectedTaxiId: string | null,
     userSelected: boolean,
     isVisible: boolean,
     setIsVisible: React.Dispatch<React.SetStateAction<boolean>>,
+    navigation: DrawerNavigationProp<DrawerParamList, "Map">,
 }) => {
 
     const { colorScheme } = useColorScheme();
@@ -194,6 +197,7 @@ const BottomSheet = ({ bottomSheetModalRef, selectedTaxiId, userSelected, setIsV
                                 title: 'Opción 1',
                                 icon: "radio",
                                 onPress: () => {
+                                    navigation.openDrawer();
                                     console.log("Opción 1")
                                 }
                             },
@@ -280,20 +284,22 @@ const BottomSheet = ({ bottomSheetModalRef, selectedTaxiId, userSelected, setIsV
                                 ? <>
                                     <MaterialCommunityIcons
                                         name={'login'}
-                                        size={(sheetCurrentSnap === 0 && (width < 768)) ? 42 : 56}
+                                        size={(sheetCurrentSnap === 0&& (width < 768)) ? 42 : 56}
                                         color={Colors[colorScheme ?? 'light'].text}
                                     />
                                     <Text numberOfLines={2} className='w-64 text-center my-4 max-[768px]:my-2 max-[367px]:my-1 text-lg max-[768px]:text-base max-[367px]:text-sm font-bold text-slate-700 dark:text-slate-100'>
                                         Inicie sesión o seleccione un taxi para ver su información
                                     </Text>
-                                    <Link
-                                        href={'/auth/sign-in'}
-                                        className={'pt-1 h-12 max-[367px]:h-8 max-[768px]:h-10 w-[200px] max-[367px]:w-[160px] max-[768px]:w-[180px] bg-[#FCCB6F] dark:bg-white rounded-3xl justify-center items-center text-center'}
+                                    <PressBtn
+                                        onPress={() => {
+                                            navigation.navigate("Sign-In");
+                                        }}
+                                        className='pt-1 h-12 max-[367px]:h-8 max-[768px]:h-10 w-[200px] max-[367px]:w-[160px] max-[768px]:w-[180px] bg-[#FCCB6F] dark:bg-white rounded-3xl justify-center items-center text-center'
                                     >
                                         <Text darkColor="black" className={'text-white dark:text-black font-bold text-lg max-[367px]:text-base'}>
                                             {isFirstTime ? "Sign Up" : "Sign In"}
                                         </Text>
-                                    </Link>
+                                    </PressBtn>
                                 </>
                                 :
                                 <ActivityIndicator

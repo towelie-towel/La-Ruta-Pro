@@ -57,7 +57,6 @@ export default function Home() {
     const drawerWidth = isLargeScreen
         ? (width / 4)
         : isSmallScreen ? 200 : (width / 2)
-
     const { isConnected, isInternetReachable, type: connectionType } = NetInfo.useNetInfo()
     const { colorScheme } = useColorScheme();
 
