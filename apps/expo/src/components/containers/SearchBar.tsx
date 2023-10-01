@@ -11,7 +11,7 @@ import { GooglePlacesAutocomplete, type GooglePlaceData, type GooglePlaceDetail 
 import { PressBtn } from '../shared/PressBtn';
 // import Colors from '~/constants/Colors';
 import type { DrawerParamList } from '~/app';
-import { userMarkersAtom } from '~/components/map/SelectMarkerIcon';
+import { userMarkersAtom } from '~/components/map/AddUserMarker';
 
 /* 
 https://maps.googleapis.com/maps/api/place/findplacefromtext/json?fields=formatted_address%2Cname%2Crating%2Copening_hours%2Cgeometry&input=23%20y%2025&inputtype=textquery&locationbias=circle%3A2000%4023.1383300%2C-82.3641700&key=AIzaSyAtcwUbA0jjJ6ARXl5_FqIqYcGbTI_XZEE

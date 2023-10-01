@@ -5,8 +5,8 @@ import { atomWithStorage, createJSONStorage } from 'jotai/utils'
 import * as ExpoLocation from 'expo-location';
 import type { MarkerData, WSTaxi } from '~/constants/Markers';
 
-const storedIsFirstTime = createJSONStorage<boolean>(() => AsyncStorage)
-export const isFirstTimeAtom = atomWithStorage<boolean>('isFirstTime', true, storedIsFirstTime)
+const storedIsConnected = createJSONStorage<boolean>(() => AsyncStorage)
+export const isConnectedAtom = atomWithStorage<boolean>('isConnected', true, storedIsConnected)
 
 interface WSContext {
     taxis: MarkerData[],

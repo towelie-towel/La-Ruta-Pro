@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-    LayoutAnimation, TextInput, ActivityIndicator, KeyboardAvoidingView,
+    LayoutAnimation, TextInput, ActivityIndicator, KeyboardAvoidingView, TouchableOpacity,
 } from 'react-native';
 import { Stack, usePathname, useRouter } from 'expo-router';
 import { type DrawerNavigationProp } from '@react-navigation/drawer';
@@ -13,6 +13,9 @@ import { type DrawerParamList } from '~/app';
 import { PressBtn } from '~/components/shared/PressBtn';
 import { View, Text } from '~/components/shared/Themed';
 import Colors from '~/constants/Colors';
+import { isValidPassword, isValidPhone } from '~/utils/auth';
+import Popover, { PopoverMode, PopoverPlacement } from 'react-native-popover-view';
+import type { SignInConfig } from '~/constants/Configs';
 
 export default function SignIn({ navigation }: { navigation?: DrawerNavigationProp<DrawerParamList> }) {
 
@@ -20,14 +23,18 @@ export default function SignIn({ navigation }: { navigation?: DrawerNavigationPr
     const pathName = usePathname()
     const { replace } = useRouter()
     const isOnSignInRoute = pathName.includes("sign-in")
+    const [signInConfigs, setSignInConfigs] = useState<SignInConfig>();
 
     const passWordRef = useRef<TextInput>(null)
     const [phone, setPhone] = useState('');
-    const [phoneError, _setphoneError] = useState('');
+    const [phoneError, setPhoneError] = useState('');
     const [password, setPassword] = useState('');
-    const [passwordError, _setPasswordError] = useState('');
+    const [passwordError, setPasswordError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isReduced, setIsReduced] = useState(false)
+
+    const [showPhonePopover, setShowPhonePopover] = useState(false);
+    const [showPasswordPopover, setShowPasswordPopover] = useState(false);
 
     const reduceLogo = () => {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -35,6 +42,24 @@ export default function SignIn({ navigation }: { navigation?: DrawerNavigationPr
     }
 
     const handleSignIn = async () => {
+        const [phoneOk, phoneErr] = isValidPhone(phone.trim(), signInConfigs?.errors.phoneError)
+        const [passwordOk, passwordErr] = isValidPassword(password, signInConfigs?.errors.passwordError)
+        console.log("handleSignIn");
+
+        if (!phoneOk || !passwordOk) {
+            if (!phoneOk) {
+                setPhoneError(phoneErr)
+                setShowPhonePopover(true)
+                console.error("invalid phone: " + phoneErr)
+            }
+            if (!passwordOk) {
+                setPasswordError(passwordErr)
+                setShowPasswordPopover(true)
+                console.error("invalid password: " + passwordErr)
+            }
+            setIsLoading(false)
+            return
+        }
 
         const { error } = await supabase.auth.signInWithPassword({
             phone: '+53' + phone.trim(),
@@ -48,10 +73,13 @@ export default function SignIn({ navigation }: { navigation?: DrawerNavigationPr
         setIsLoading(false)
     }
 
+    useEffect(() => {
+    })
+
     return (
         <View className={'w-full h-full justify-center items-center'}>
             <Stack.Screen options={{
-                title: 'Inicio de Sesión',
+                title: signInConfigs?.screenTitle ?? "Inicio de Sesión",
             }} />
 
             <View
@@ -60,9 +88,10 @@ export default function SignIn({ navigation }: { navigation?: DrawerNavigationPr
                     display: isReduced ? 'none' : 'flex',
                 }}
             >
-                <Text numberOfLines={2} adjustsFontSizeToFit className='font-bold text-3xl text-center max-[367px]:text-2xl'>Bienvenida Otra Vez</Text>
+                <Text numberOfLines={2} adjustsFontSizeToFit className='font-bold text-3xl text-center max-[367px]:text-2xl'>{signInConfigs?.title ?? "Bienvenida Otra Vez"}</Text>
+                {signInConfigs?.description && <Text numberOfLines={2} adjustsFontSizeToFit className='mt-4 dark:text-white font-bold text-3xl text-center max-[367px]:text-2xl'>{signInConfigs?.description}</Text>}
                 <Image
-                    source={require('../../../assets/Logo.png')}
+                    source={signInConfigs?.image ?? require('../../../assets/Logo.png')}
                     alt='Tu-Ruta Logo'
                     className='h-16 w-14 max-[367px]:h-12 max-[367px]:w-12 max-[340px]:h-12 max-[340px]:w-10 mt-4 max-[367px]:my-0'
                 />
@@ -77,11 +106,13 @@ export default function SignIn({ navigation }: { navigation?: DrawerNavigationPr
                         </View>
                         <TextInput
                             className={'h-12 w-[80%] pl-4 pr-10 border rounded-r border-gray-300 dark:border-gray-600 dark:bg-transparent text-gray-500 dark:text-slate-500'}
-                            placeholder="Número de Móvil"
-                            autoCapitalize="none"
-                            keyboardType='numeric'
-                            placeholderTextColor={colorScheme === 'dark' ? "rgb(107 114 128)" : "rgb(100 116 139)"}
+                            placeholder={signInConfigs?.fields.phone.placeholder ?? "Número de Móvil"}
+                            placeholderTextColor={colorScheme === 'dark' ? signInConfigs?.fields.phone.placeholderTextColor.dark ?? "rgb(107 114 128)" : signInConfigs?.fields.phone.placeholderTextColor.light ?? "rgb(100 116 139)"}
+                            autoCapitalize={signInConfigs?.fields.phone.autoCapitalize ?? "none"}
+                            keyboardType={signInConfigs?.fields.phone.keyboardType}
+                            maxLength={signInConfigs?.fields.phone.maxLength}
                             onChangeText={setPhone}
+                            autoCorrect={signInConfigs?.fields.phone.autoCorrect}
                             value={phone}
 
                             onFocus={() => {
@@ -91,11 +122,28 @@ export default function SignIn({ navigation }: { navigation?: DrawerNavigationPr
                         {
                             phoneError &&
                             <View className='absolute right-2 my-auto'>
-                                <MaterialIcons
-                                    name='error'
-                                    size={24}
-                                    color={Colors[colorScheme ?? 'light'].text}
-                                />
+                                    <Popover
+                                        verticalOffset={-32}
+                                        mode={PopoverMode.RN_MODAL}
+                                        placement={PopoverPlacement.LEFT}
+                                        isVisible={showPhonePopover}
+                                        onRequestClose={() => setShowPhonePopover(false)}
+                                        from={(
+                                            <TouchableOpacity
+                                                onPress={() => {
+                                                    setShowPhonePopover(true)
+                                                }}
+                                            >
+                                                    <MaterialIcons
+                                                        name='error'
+                                                        size={24}
+                                                        color={Colors[colorScheme ?? 'light'].text}
+                                                    />
+                                            </TouchableOpacity>
+                                        )}
+                                    >
+                                    <Text /* numberOfLines={1} */ className='text-black p-2'>{phoneError}</Text>
+                                </Popover>
                             </View>
                         }
                     </View>
@@ -122,11 +170,28 @@ export default function SignIn({ navigation }: { navigation?: DrawerNavigationPr
                         {
                             passwordError &&
                             <View className='absolute right-2 my-auto'>
-                                <MaterialIcons
-                                    name='error'
-                                    size={24}
-                                    color={Colors[colorScheme ?? 'light'].text}
-                                />
+                                <Popover
+                                    verticalOffset={-32}
+                                    mode={PopoverMode.RN_MODAL}
+                                    placement={PopoverPlacement.LEFT}
+                                    isVisible={showPasswordPopover}
+                                    onRequestClose={() => setShowPasswordPopover(false)}
+                                    from={(
+                                        <TouchableOpacity
+                                            onPress={() => {
+                                                setShowPasswordPopover(true)
+                                            }}
+                                        >
+                                            <MaterialIcons
+                                                name='error'
+                                                size={24}
+                                                color={Colors[colorScheme ?? 'light'].text}
+                                            />
+                                        </TouchableOpacity>
+                                    )}
+                                >
+                                        <Text /* numberOfLines={1} */ className='text-black p-2'>{passwordError}</Text>
+                                </Popover>
                             </View>
                         }
                     </View>

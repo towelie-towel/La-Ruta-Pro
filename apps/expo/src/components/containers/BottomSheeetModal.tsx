@@ -21,7 +21,7 @@ import { View, Text } from '~/components/shared/Themed';
 import { PressBtn } from '~/components/shared/PressBtn';
 import Colors from '~/constants/Colors';
 
-import { userMarkersAtom } from '~/components/map/SelectMarkerIcon';
+import { userMarkersAtom } from '~/components/map/AddUserMarker';
 import AbsoluteDropdown from '~/components/shared/AbsoluteDropdown';
 import { isFirstTimeAtom } from '~/context/UserContext';
 import AbsoluteLoading from '../shared/AbsoluteLoading';
@@ -130,6 +130,7 @@ const BottomSheet = ({ bottomSheetModalRef, selectedTaxiId, userSelected, setIsV
                 LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
                 setSheetCurrentSnap(e)
             }}
+            detached
             enableContentPanningGesture={false}
             snapPoints={snapPoints}
             backgroundStyle={{ borderRadius: 50, backgroundColor: colorScheme === 'light' ? 'rgba(203,213,225,0.8)' : 'rgba(26,18,11,0.5)' }}

@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { type Session } from '@supabase/supabase-js'
-import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { atomWithStorage, createJSONStorage } from 'jotai/utils'
 import { useSetAtom } from 'jotai'
@@ -9,6 +8,9 @@ import { supabase } from "~/lib/supabase"
 
 const storedIsFirstTime = createJSONStorage<boolean>(() => AsyncStorage)
 export const isFirstTimeAtom = atomWithStorage<boolean>('isFirstTime', true, storedIsFirstTime)
+
+const storedConfig = createJSONStorage<boolean>(() => AsyncStorage)
+export const configAtom = atomWithStorage<boolean>('config', true, storedConfig)
 
 interface UserContext {
     session: Session | null | undefined,

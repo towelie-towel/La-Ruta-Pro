@@ -30,7 +30,7 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
 
     const [isLoading, setIsLoading] = useState(false)
 
-    const [phoneNumber, setPhoneNumber] = useState('')
+    const [phone, setPhone] = useState('')
     const [pendingVerification, setPendingVerification] = useState(false)
     const [isPhoneVerified, setIsPhoneVerified] = useState(false)
     const [phoneError, setPhoneError] = useState('')
@@ -71,7 +71,7 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
 
     const sendOTP = async () => {
         setIsLoading(true);
-        const [phoneOk, phoneErr] = isValidPhone(phoneNumber.trim())
+        const [phoneOk, phoneErr] = isValidPhone(phone.trim())
         const [passwordOk, passwordErr] = isValidPassword(password)
         const [usernameOk, usernameErr] = isValidUsername(username)
 
@@ -94,7 +94,7 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
 
         console.log("Sending OTP Code")
         const { error } = await supabase.auth.signUp({
-            phone: '+53' + phoneNumber.trim(),
+            phone: '+53' + phone.trim(),
             password: password,
             options: {
                 data: {
@@ -119,7 +119,7 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
     const verifyOtp = async () => {
         setIsLoading(true)
         const { error, data } = await supabase.auth.verifyOtp({
-            phone: '+53' + phoneNumber.trim(),
+            phone: '+53' + phone.trim(),
             token: otpToken,
             type: 'sms',
         })
@@ -164,8 +164,8 @@ export default function SignUp({ navigation }: { navigation?: DrawerNavigationPr
                             autoCapitalize="none"
                             keyboardType='numeric'
                             placeholderTextColor={colorScheme === 'dark' ? "rgb(107 114 128)" : "rgb(100 116 139)"}
-                            onChangeText={setPhoneNumber}
-                            value={phoneNumber}
+                            onChangeText={setPhone}
+                            value={phone}
 
                             onFocus={() => {
                                 reduceLogo()

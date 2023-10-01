@@ -56,8 +56,6 @@ const defineConfig = (): ExpoConfig => ({
     "./expo-plugins/with-modify-gradle.js",
     "@react-native-google-signin/google-signin",
     "@react-native-firebase/app",
-    /* "@react-native-firebase/perf",
-    "@react-native-firebase/crashlytics" */
   ],
 });
 

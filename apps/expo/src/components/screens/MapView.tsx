@@ -20,9 +20,9 @@ import { Accuracy, getCurrentPositionAsync } from 'expo-location';
 import { View } from '~/components/shared/Themed';
 import { NightMap } from '~/constants/NightMap';
 import UserMarker from '~/components/map/UserMarker';
-import { type UserMarkerIconType, userMarkersAtom } from '~/components/map/SelectMarkerIcon';
+import { type UserMarkerIconType, userMarkersAtom } from '~/components/map/AddUserMarker';
 import UserMarkerIcon from '~/components/map/UserMarkerIcon';
-import SelectMarkerIcon from '~/components/map/SelectMarkerIcon';
+import AddUserMarker from '~/components/map/AddUserMarker';
 import AnimatedRouteMarker from '~/components/map/AnimatedRouteMarker';
 import BottomSheet from '~/components/containers/BottomSheeetModal';
 import NavigationMenu from '~/components/containers/NavigationMenu';
@@ -289,7 +289,7 @@ const MapViewComponent = ({ navigation }: { navigation: DrawerNavigationProp<Dra
 
                 {
                     isAddingMarker &&
-                    <SelectMarkerIcon
+                    <AddUserMarker
                         onConfirmFn={confirmAddMarkerIcon}
                     />
                 }

@@ -41,9 +41,15 @@ importers:
       '@react-native-community/netinfo':
         specifier: 9.4.1
         version: 9.4.1(react-native@0.72.3)
+      '@react-native-firebase/analytics':
+        specifier: ^18.5.0
+        version: 18.5.0(@react-native-firebase/app@18.5.0)
       '@react-native-firebase/app':
         specifier: ^18.5.0
         version: 18.5.0(expo@49.0.11)(react-native@0.72.3)(react@18.2.0)
+      '@react-native-firebase/remote-config':
+        specifier: ^18.5.0
+        version: 18.5.0(@react-native-firebase/analytics@18.5.0)(@react-native-firebase/app@18.5.0)
       '@react-native-google-signin/google-signin':
         specifier: ^10.0.1
         version: 10.0.1(expo@49.0.11)(react-native@0.72.3)(react@18.2.0)
@@ -2565,6 +2571,14 @@ packages:
       react-native: 0.72.3(@babel/core@7.23.0)(@babel/preset-env@7.22.20)(react@18.2.0)
     dev: false
 
+  /@react-native-firebase/analytics@18.5.0(@react-native-firebase/app@18.5.0):
+    resolution: {integrity: sha512-+8fkDedcftieOBEkNdqEW0lS/FB9SKzfUc3yYXnJcLTy3Ceg9JZga/tWz4BGbbxPddUy1Sm2UuWDuOxsdkFUyA==}
+    peerDependencies:
+      '@react-native-firebase/app': 18.5.0
+    dependencies:
+      '@react-native-firebase/app': 18.5.0(expo@49.0.11)(react-native@0.72.3)(react@18.2.0)
+    dev: false
+
   /@react-native-firebase/app@18.5.0(expo@49.0.11)(react-native@0.72.3)(react@18.2.0):
     resolution: {integrity: sha512-AhHQi5KFDlKZn/lH7rEYtLfpsGamEq+P/cXZWcNPcP0WGlmi++abk7Pxnn4MjnG7TNhEyG/C9uq//qb6VhXaZg==}
     peerDependencies:
@@ -2580,6 +2594,16 @@ packages:
       react: 18.2.0
       react-native: 0.72.3(@babel/core@7.23.0)(@babel/preset-env@7.22.20)(react@18.2.0)
       superstruct: 0.6.2
+    dev: false
+
+  /@react-native-firebase/remote-config@18.5.0(@react-native-firebase/analytics@18.5.0)(@react-native-firebase/app@18.5.0):
+    resolution: {integrity: sha512-EOXToa1tLtskWjCAjW9RZHB19BHk8+MiLLS4B2DSAHs/t6QVRtjlK+xqI2nSppHSFdzMI6Nd9wi869baK/y5RA==}
+    peerDependencies:
+      '@react-native-firebase/analytics': 18.5.0
+      '@react-native-firebase/app': 18.5.0
+    dependencies:
+      '@react-native-firebase/analytics': 18.5.0(@react-native-firebase/app@18.5.0)
+      '@react-native-firebase/app': 18.5.0(expo@49.0.11)(react-native@0.72.3)(react@18.2.0)
     dev: false
 
   /@react-native-google-signin/google-signin@10.0.1(expo@49.0.11)(react-native@0.72.3)(react@18.2.0):

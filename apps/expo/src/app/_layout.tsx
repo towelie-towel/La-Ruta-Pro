@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import { NativeModules, Platform } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
@@ -22,6 +22,9 @@ const RootLayout = () => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     "Inter-Regular": require("../../assets/Inter-Regular.otf"),
   });
+
+  useEffect(() => {
+  }, []);
 
   const onLayoutRootView = useCallback(async () => {
     if (fontsLoaded) {

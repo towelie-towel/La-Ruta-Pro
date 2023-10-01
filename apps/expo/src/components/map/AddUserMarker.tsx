@@ -3,8 +3,8 @@ import { Dimensions, LayoutAnimation, Pressable, TouchableWithoutFeedback } from
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useColorScheme } from 'nativewind';
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { atomWithStorage, createJSONStorage, } from 'jotai/utils';
-import { useAtom, } from 'jotai';
+import { atomWithStorage, createJSONStorage, loadable} from 'jotai/utils';
+import { useAtom, } from 'jotai'
 
 import { View, Text } from '~/components/shared/Themed';
 import { PressBtn } from '~/components/shared/PressBtn';
@@ -65,7 +65,7 @@ export interface UserMarkerIconType {
     }
 }
 
-const SelectMarkerIcon: React.FC<{
+const AddUserMarker: React.FC<{
     onConfirmFn: (newMarker: UserMarkerIconType) => void
 }> = ({ onConfirmFn }) => {
 
@@ -74,7 +74,7 @@ const SelectMarkerIcon: React.FC<{
 
     const [userMarkers, _setUserMarkers] = useAtom(userMarkersAtom)
 
-    const [isSelectMarkerIconOpen, setIsSelectMarkerIconOpen] = useState(false);
+    const [isAddUserMarkerOpen, setIsAddUserMarkerOpen] = useState(false);
     const [selectMarkerWidth, setSelectMarkerWidth] = useState(96);
     const [selectMarkerHeight, setSelectMarkerHeight] = useState(40);
     const addingMarkerDataRef = useRef<UserMarkerIconType>({
@@ -91,7 +91,7 @@ const SelectMarkerIcon: React.FC<{
         name: "airplane-marker"
     });
 
-    const toggleSelectMarkerIcon = () => {
+    const toggleAddUserMarker = () => {
         LayoutAnimation.configureNext({
             duration: 300,
             update: {
@@ -107,10 +107,10 @@ const SelectMarkerIcon: React.FC<{
                 property: 'scaleXY',
             },
         })
-        const newWidth = isSelectMarkerIconOpen ? 96 : 216;
-        const newHeight = isSelectMarkerIconOpen ? 40 : 136;
+        const newWidth = isAddUserMarkerOpen ? 96 : 216;
+        const newHeight = isAddUserMarkerOpen ? 40 : 136;
 
-        setIsSelectMarkerIconOpen(!isSelectMarkerIconOpen)
+        setIsAddUserMarkerOpen(!isAddUserMarkerOpen)
         setSelectMarkerWidth(newWidth)
         setSelectMarkerHeight(newHeight)
     }
@@ -125,7 +125,7 @@ const SelectMarkerIcon: React.FC<{
                 longitude: 69.420
             }
         }
-        toggleSelectMarkerIcon()
+        toggleAddUserMarker()
     }
 
     const onConfirmInternal = () => {
@@ -148,28 +148,28 @@ const SelectMarkerIcon: React.FC<{
                 />
             </View>
             {
-                isSelectMarkerIconOpen &&
-                <Pressable onPress={toggleSelectMarkerIcon} className='absolute w-full h-full z-10'>
+                isAddUserMarkerOpen &&
+                <Pressable onPress={toggleAddUserMarker} className='absolute w-full h-full z-10'>
 
                 </Pressable>
             }
             <TouchableWithoutFeedback>
                 <Pressable
-                    onPress={!isSelectMarkerIconOpen ? toggleSelectMarkerIcon : undefined}
+                    onPress={!isAddUserMarkerOpen ? toggleAddUserMarker : undefined}
                     className={'absolute z-20 bottom-24 bg-white rounded-3xl shadow-lg flex-row items-center'}
                     style={{
                         height: selectMarkerHeight,
                         width: selectMarkerWidth,
-                        justifyContent: isSelectMarkerIconOpen ? 'center' : 'space-evenly',
-                        flexWrap: isSelectMarkerIconOpen ? 'wrap' : 'nowrap',
-                        flexDirection: isSelectMarkerIconOpen ? 'column' : 'row',
-                        gap: isSelectMarkerIconOpen ? 6 : 0,
-                        padding: isSelectMarkerIconOpen ? 8 : 0,
+                        justifyContent: isAddUserMarkerOpen ? 'center' : 'space-evenly',
+                        flexWrap: isAddUserMarkerOpen ? 'wrap' : 'nowrap',
+                        flexDirection: isAddUserMarkerOpen ? 'column' : 'row',
+                        gap: isAddUserMarkerOpen ? 6 : 0,
+                        padding: isAddUserMarkerOpen ? 8 : 0,
                         left: (width / 2) - (selectMarkerWidth / 2),
                     }}
                 >
                     {
-                        !isSelectMarkerIconOpen &&
+                        !isAddUserMarkerOpen &&
                         <>
                             <MaterialCommunityIcons
                                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -186,7 +186,7 @@ const SelectMarkerIcon: React.FC<{
                         </>
                     }
                     {
-                        isSelectMarkerIconOpen &&
+                        isAddUserMarkerOpen &&
                         <>
                             {selectableMarkerIcons.map((markerIcon) => {
                                 return (
@@ -194,7 +194,7 @@ const SelectMarkerIcon: React.FC<{
                                         key={markerIcon.name}
                                         onPress={() => { onMarkerIconPress(markerIcon) }}
                                         style={{
-                                            display: isSelectMarkerIconOpen ? 'flex' : 'none'
+                                            display: isAddUserMarkerOpen ? 'flex' : 'none'
                                         }}
                                     >
                                         <MaterialCommunityIcons
@@ -229,4 +229,4 @@ const SelectMarkerIcon: React.FC<{
     )
 }
 
-export default memo(SelectMarkerIcon)
+export default memo(AddUserMarker)
